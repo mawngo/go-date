@@ -4,9 +4,6 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"fmt"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/x/bsonx/bsoncore"
 	"strings"
 	"time"
 )
@@ -186,26 +183,4 @@ func (date *Date) UnmarshalParam(param string) error {
 
 func (date Date) String() string {
 	return date.t.Format(time.DateOnly)
-}
-
-func (date Date) MarshalBSONValue() (byte, []byte, error) {
-	typ, data, err := bson.MarshalValue(date.String())
-	return byte(typ), data, err
-}
-
-func (date *Date) UnmarshalBSONValue(typ byte, bytes []byte) error {
-	b := bson.Type(typ)
-	if b == bson.TypeNull {
-		return nil
-	}
-	if b != bson.TypeString {
-		return errors.New("error invalid bson date type " + b.String())
-	}
-	s, _, _ := bsoncore.ReadString(bytes)
-	d, err := time.Parse(time.DateOnly, s)
-	if err != nil {
-		return fmt.Errorf("error invalid bson date format: %w", err)
-	}
-	date.t = d
-	return nil
 }
