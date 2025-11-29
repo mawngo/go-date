@@ -10,6 +10,8 @@ Require go 1.25+
 go get -u github.com/mawngo/go-date
 ```
 
+Or just copy the `date.go` file into your project.
+
 ## Usage
 
 ```go

@@ -233,3 +233,25 @@ func (date *Date) UnmarshalParam(param string) error {
 	date.t = d
 	return nil
 }
+
+func (date *Date) UnmarshalText(text []byte) error {
+	param := string(text)
+	if param == "" {
+		return nil
+	}
+	d, err := time.Parse(time.DateOnly, param)
+	if err != nil {
+		d, err = time.Parse(time.RFC3339, param)
+		if err != nil {
+			return err
+		}
+		y, m, day := d.Date()
+		d = time.Date(y, m, day, 0, 0, 0, 0, time.UTC)
+	}
+	date.t = d
+	return nil
+}
+
+func (date Date) MarshalText() ([]byte, error) {
+	return []byte(date.t.Format(time.DateOnly)), nil
+}

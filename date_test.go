@@ -49,7 +49,7 @@ func TestDate(t *testing.T) {
 		}
 	})
 
-	t.Run("Gob", func(t *testing.T) {
+	t.Run("GobEncode/Decode", func(t *testing.T) {
 		expect := FromTime(time.Date(2020, 01, 01, 1, 1, 1, 1, time.Local))
 		b, err := (&expect).GobEncode()
 		if err != nil {
@@ -58,6 +58,26 @@ func TestDate(t *testing.T) {
 
 		actual := Date{}
 		err = (&actual).GobDecode(b)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if actual != expect {
+			t.Fatal("Gob mismatch")
+		}
+	})
+
+	t.Run("Marshal/UnmarshalText", func(t *testing.T) {
+		expect := FromTime(time.Date(2020, 01, 01, 1, 1, 1, 1, time.Local))
+		b, err := (&expect).MarshalText()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(b) != "2020-01-01" {
+			t.Fatal("MarshalText mismatch")
+		}
+
+		actual := Date{}
+		err = (&actual).UnmarshalText(b)
 		if err != nil {
 			t.Fatal(err)
 		}
