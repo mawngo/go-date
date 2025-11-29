@@ -30,27 +30,40 @@ func FromTime(t time.Time) Date {
 
 // Now create Date from time.Now.
 func Now() Date {
-	return FromTime(time.Now())
+	y, m, d := time.Now().Date()
+	return Date{
+		t: time.Date(y, m, d, 0, 0, 0, 0, time.UTC),
+	}
 }
 
+// AddDate add years, months, and days to date.
+// See [time.Time.AddDate].
 func (date Date) AddDate(years int, months int, days int) Date {
 	return Date{
 		t: date.t.AddDate(years, months, days),
 	}
 }
 
+// AddDay add days to date.
+// See [time.Time.AddDate].
 func (date Date) AddDay(days int) Date {
 	return Date{
 		t: date.t.AddDate(0, 0, days),
 	}
 }
 
-// Before reports whether the Date is before others Date.
+// Sub returns the duration between [Date] and the other [Date].
+// See [time.Time.Sub].
+func (date Date) Sub(other Date) time.Duration {
+	return date.t.Sub(other.t)
+}
+
+// Before reports whether the [Date] is before others [Date].
 func (date Date) Before(other Date) bool {
 	return date.t.Before(other.t)
 }
 
-// After reports whether the Date is after others Date.
+// After reports whether the [Date] is after others [Date].
 func (date Date) After(other Date) bool {
 	return date.t.After(other.t)
 }
@@ -60,22 +73,33 @@ func (date Date) Equal(other Date) bool {
 	return date.t.Equal(other.t)
 }
 
-// ToUTCTime convert Date to UTC time at the start of the day.
+// Compare compares the date with u. If t is before u, it returns -1;
+// if t is after u, it returns +1; if they're the same, it returns 0.
+func (date Date) Compare(u Date) int {
+	return date.t.Compare(u.t)
+}
+
+// ToUTCTime convert [Date] to UTC time at the start of the day.
 func (date Date) ToUTCTime() time.Time {
 	return date.t
 }
 
-// ToLocationTime convert Date to time at the start of the day in the specified location.
+// ToLocationTime convert [Date] to time at the start of the day in the specified [time.Location].
 func (date Date) ToLocationTime(loc *time.Location) time.Time {
 	return time.Date(date.t.Year(), date.t.Month(), date.t.Day(), 0, 0, 0, 0, loc)
 }
 
-// ToLocalTime convert Date to time at the start of the day in the local location.
+// ToLocalTime convert [Date] to time at the start of the day in the local location.
 func (date Date) ToLocalTime() time.Time {
 	return time.Date(date.t.Year(), date.t.Month(), date.t.Day(), 0, 0, 0, 0, time.Local)
 }
 
-// ToTime convert Date to time.Time.
+// ToLocalTimeAtClock convert [Date] to time.Time at the specified clock time in the local location.
+func (date Date) ToLocalTimeAtClock(hour, minute, sec int) time.Time {
+	return time.Date(date.t.Year(), date.t.Month(), date.t.Day(), hour, minute, sec, 0, time.Local)
+}
+
+// ToTime convert [Date] to time.Time.
 func (date Date) ToTime(hour, minute, sec, nsec int, loc *time.Location) time.Time {
 	return time.Date(date.t.Year(), date.t.Month(), date.t.Day(), hour, minute, sec, nsec, loc)
 }
@@ -105,6 +129,29 @@ func (date Date) Date() (year int, month time.Month, day int) {
 	return date.t.Date()
 }
 
+// Weekday returns the day of the week specified by [Date].
+func (date Date) Weekday() time.Weekday {
+	return date.t.Weekday()
+}
+
+// ISOWeek returns the ISO 8601 year and week number in which t occurs.
+// Week ranges from 1 to 53. Jan 01 to Jan 03 of year n might belong to
+// week 52 or 53 of year n-1, and Dec 29 to Dec 31 might belong to week 1
+// of year n+1.
+func (date Date) ISOWeek() (year, week int) {
+	return date.t.ISOWeek()
+}
+
+// YearDay returns the day of the year specified by t, in the range [1,365] for non-leap years,
+// and [1,366] in leap years.
+func (date Date) YearDay() int {
+	return date.t.YearDay()
+}
+
+func (date Date) String() string {
+	return date.t.Format(time.DateOnly)
+}
+
 func (date *Date) Scan(value interface{}) (err error) {
 	nullTime := &sql.NullTime{}
 	err = nullTime.Scan(value)
@@ -125,7 +172,13 @@ func (date Date) GobEncode() ([]byte, error) {
 }
 
 func (date *Date) GobDecode(b []byte) error {
-	return date.t.GobDecode(b)
+	t := time.Time{}
+	err := (&t).GobDecode(b)
+	if err != nil {
+		return err
+	}
+	date.t = t
+	return nil
 }
 
 func (date Date) MarshalJSON() ([]byte, error) {
@@ -179,8 +232,4 @@ func (date *Date) UnmarshalParam(param string) error {
 	}
 	date.t = d
 	return nil
-}
-
-func (date Date) String() string {
-	return date.t.Format(time.DateOnly)
 }
