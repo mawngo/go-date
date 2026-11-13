@@ -24,9 +24,11 @@ type binding interface {
 	sql.Scanner
 	UnmarshalParam(string) error
 	GormDataType() string
+	unwrap() time.Time
 
 	String() string
-	unwrap() time.Time
+	Format(layout string) string
+	AppendFormat(b []byte, layout string) []byte
 }
 
 // localDate is a generic interface for date types.
@@ -318,6 +320,20 @@ func (dt DateTime) Local() time.Time {
 
 func (dt DateTime) String() string {
 	return dt.t.Format(DateTimeNano)
+}
+
+// Format returns a textual representation of the time value formatted according
+// to the layout defined by the argument.
+//
+// See [time.Time.Format].
+func (dt DateTime) Format(layout string) string {
+	return dt.t.Format(layout)
+}
+
+// AppendFormat is like [Date.Format] but appends the textual
+// representation to b and returns the extended buffer.
+func (dt DateTime) AppendFormat(b []byte, layout string) []byte {
+	return dt.t.AppendFormat(b, layout)
 }
 
 // ----------------------------------------------------------------------------

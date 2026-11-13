@@ -13,6 +13,22 @@ type bindingPtr[T any] interface {
 }
 
 func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Time) T, format string, rfc3339 bool) {
+	t.Run("Format/AppendFormat", func(t *testing.T) {
+		now := time.Now()
+		local := init(now)
+
+		for _, format := range []string{time.RFC3339Nano, time.RFC1123Z, time.RubyDate} {
+			expected := P(&local).unwrap().Format(format)
+			if P(&local).Format(format) != expected {
+				t.Fatalf("Format mismatch: expected %s, got %s", expected, P(&local).Format(format))
+			}
+
+			if b := P(&local).AppendFormat(nil, format); expected != string(b) {
+				t.Fatalf("AppendFormat mismatch: expected %s, got %s", expected, b)
+			}
+		}
+	})
+
 	t.Run("String/Scan/Value", func(t *testing.T) {
 		now := time.Now()
 		local := init(now)

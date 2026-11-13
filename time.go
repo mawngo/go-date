@@ -183,6 +183,20 @@ func (clock Time) String() string {
 	return clock.t.Format(TimeOnlyNano)
 }
 
+// Format returns a textual representation of the time value formatted according
+// to the layout defined by the argument.
+//
+// See [time.Time.Format].
+func (clock Time) Format(layout string) string {
+	return clock.t.Format(layout)
+}
+
+// AppendFormat is like [Date.Format] but appends the textual
+// representation to b and returns the extended buffer.
+func (clock Time) AppendFormat(b []byte, layout string) []byte {
+	return clock.t.AppendFormat(b, layout)
+}
+
 // ----------------------------------------------------------------------------
 // Data bindings.
 // ----------------------------------------------------------------------------

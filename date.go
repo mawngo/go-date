@@ -185,6 +185,20 @@ func (date Date) String() string {
 	return date.t.Format(time.DateOnly)
 }
 
+// Format returns a textual representation of the time value formatted according
+// to the layout defined by the argument.
+//
+// See [time.Time.Format].
+func (date Date) Format(layout string) string {
+	return date.t.Format(layout)
+}
+
+// AppendFormat is like [Date.Format] but appends the textual
+// representation to b and returns the extended buffer.
+func (date Date) AppendFormat(b []byte, layout string) []byte {
+	return date.t.AppendFormat(b, layout)
+}
+
 // ----------------------------------------------------------------------------
 // Data bindings.
 // ----------------------------------------------------------------------------
