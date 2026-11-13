@@ -15,6 +15,7 @@ type DateTime struct {
 }
 
 // NewDateTime create [DateTime].
+// Time overflow can change the date.
 func NewDateTime(year int, month time.Month, day int, hour int, min int, sec int, nsec int) DateTime {
 	return DateTime{
 		t: time.Date(year, month, day, hour, min, sec, nsec, time.UTC),

@@ -2,9 +2,6 @@
 
 Simple local `Date`, `Time` and `DateTime` type for Go.
 
-This library provide very minimal functionality for date and datetime types, serving simple use cases.
-For complex use cases, consider using [cloud.google.com/go/civil](https://pkg.go.dev/cloud.google.com/go/civil).
-
 ## Installation
 
 Require go 1.27+
@@ -13,7 +10,16 @@ Require go 1.27+
 go get -u github.com/mawngo/go-date/v2
 ```
 
-Or just copy the `date.go`, `datetime.go` and `time.go` file into your project.
+Alternately, you can just copy the `date.go`, `datetime.go` and `time.go` file into your project.
+
+The `time.go` file is optional. If not used, then remove the following function in `datetime.go`
+
+```
+// DateTimeFrom create [DateTime] from [Date] and [Time].
+func DateTimeFrom(date Date, time Time) DateTime {
+	// ...
+}
+```
 
 ## Usage
 
