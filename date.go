@@ -7,7 +7,8 @@ import (
 	"time"
 )
 
-const dateTimeFormat = time.DateTime + ".999999999"
+// DateTimeNano [time.DateTime] format with nanosecond precision.
+const DateTimeNano = time.DateTime + ".999999999"
 
 // Date represents only date part of the time.
 type Date struct {
@@ -43,7 +44,7 @@ func ParseDate(s string) (Date, error) {
 	}
 
 	// Not very effective, but people should use the [time.DateOnly] instead.
-	t, err2 := time.Parse(dateTimeFormat, s)
+	t, err2 := time.Parse(DateTimeNano, s)
 	if err2 == nil {
 		return DateOf(t), nil
 	}

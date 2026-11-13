@@ -6,7 +6,7 @@ import (
 )
 
 func TestDateTime(t *testing.T) {
-	runBindingTest(t, DateTimeOf, dateTimeFormat, true)
+	runBindingTest(t, DateTimeOf, DateTimeNano, true)
 	runDateBasicTest(t, DateTimeOf)
 	runTimeBasicTest(t, DateTimeOf)
 

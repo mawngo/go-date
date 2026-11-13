@@ -297,7 +297,7 @@ func (dt DateTime) Local() time.Time {
 // ParseDateTime parses a string and returns the DateTime it represents.
 // Support [dateTimeFormat] format and [YYYY-MM-DDTHH:MM:SS[.FFFFFFFFF]], [time.RFC3339Nano] as fallback formats.
 func ParseDateTime(s string) (DateTime, error) {
-	t, err := time.Parse(dateTimeFormat, s)
+	t, err := time.Parse(DateTimeNano, s)
 	if err == nil {
 		return DateTimeOf(t), nil
 	}
@@ -317,9 +317,9 @@ func (dt DateTime) MarshalJSON() ([]byte, error) {
 	if dt.IsZero() {
 		return []byte("null"), nil
 	}
-	b := make([]byte, 0, len(dateTimeFormat)+len(`""`))
+	b := make([]byte, 0, len(DateTimeNano)+len(`""`))
 	b = append(b, '"')
-	b = dt.t.AppendFormat(b, dateTimeFormat)
+	b = dt.t.AppendFormat(b, DateTimeNano)
 	b = append(b, '"')
 	return b, nil
 }
@@ -346,7 +346,7 @@ func (dt DateTime) MarshalText() (text []byte, err error) {
 	if dt.IsZero() {
 		return nil, nil
 	}
-	return []byte(dt.t.Format(dateTimeFormat)), nil
+	return []byte(dt.t.Format(DateTimeNano)), nil
 }
 
 func (dt *DateTime) UnmarshalText(text []byte) error {
@@ -394,7 +394,7 @@ func (dt DateTime) Value() (driver.Value, error) {
 	if dt.IsZero() {
 		return nil, nil
 	}
-	return dt.t.Format(dateTimeFormat), nil
+	return dt.t.Format(DateTimeNano), nil
 }
 
 func (dt *DateTime) Scan(value any) error {
@@ -438,7 +438,7 @@ func (dt DateTime) GormDataType() string {
 }
 
 func (dt DateTime) String() string {
-	return dt.t.Format(dateTimeFormat)
+	return dt.t.Format(DateTimeNano)
 }
 
 func (dt DateTime) unwrap() time.Time {

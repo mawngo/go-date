@@ -49,7 +49,7 @@ func runTimeBasicTest[T localTime[T]](t *testing.T, init func(t time.Time) T) {
 }
 
 func TestTime(t *testing.T) {
-	runBindingTest(t, TimeOf, timeFormat, false)
+	runBindingTest(t, TimeOf, TimeOnlyNano, false)
 	runTimeBasicTest(t, TimeOf)
 
 	t.Run("Test Construct", func(t *testing.T) {

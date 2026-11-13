@@ -7,7 +7,8 @@ import (
 	"time"
 )
 
-const timeFormat = time.TimeOnly + ".999999999"
+// TimeOnlyNano [time.TimeOnly] format with nanosecond precision.
+const TimeOnlyNano = time.TimeOnly + ".999999999"
 
 // localTime is a generic interface for time types.
 // Contains common methods for time types.
@@ -94,7 +95,7 @@ func ClockOf(t time.Time) Time {
 // consisting of a decimal point followed by one to nine decimal digits.
 // (RFC3339 admits only one digit after the decimal point).
 func ParseTime(s string) (Time, error) {
-	t, err := time.Parse(timeFormat, s)
+	t, err := time.Parse(TimeOnlyNano, s)
 	if err != nil {
 		return Time{}, err
 	}
@@ -182,9 +183,9 @@ func (clock Time) MarshalJSON() ([]byte, error) {
 	if clock.IsZero() {
 		return []byte("null"), nil
 	}
-	b := make([]byte, 0, len(timeFormat)+len(`""`))
+	b := make([]byte, 0, len(TimeOnlyNano)+len(`""`))
 	b = append(b, '"')
-	b = clock.t.AppendFormat(b, timeFormat)
+	b = clock.t.AppendFormat(b, TimeOnlyNano)
 	b = append(b, '"')
 	return b, nil
 }
@@ -211,7 +212,7 @@ func (clock Time) MarshalText() (text []byte, err error) {
 	if clock.IsZero() {
 		return nil, nil
 	}
-	return []byte(clock.t.Format(timeFormat)), nil
+	return []byte(clock.t.Format(TimeOnlyNano)), nil
 }
 
 func (clock *Time) UnmarshalText(text []byte) error {
@@ -272,7 +273,7 @@ func (clock Time) Value() (driver.Value, error) {
 	if clock.IsZero() {
 		return nil, nil
 	}
-	return clock.t.Format(timeFormat), nil
+	return clock.t.Format(TimeOnlyNano), nil
 }
 
 func (clock *Time) Scan(value any) error {
@@ -300,7 +301,7 @@ func (clock *Time) Scan(value any) error {
 }
 
 func (clock Time) String() string {
-	return clock.t.Format(timeFormat)
+	return clock.t.Format(TimeOnlyNano)
 }
 
 func (clock Time) unwrap() time.Time {
