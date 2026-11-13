@@ -1,13 +1,93 @@
 package date
 
 import (
+	"database/sql"
 	"database/sql/driver"
+	"encoding"
+	"encoding/gob"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"time"
 )
 
-const dateTimeFormat = time.DateTime + ".999999999"
+type binding interface {
+	json.Marshaler
+	json.Unmarshaler
+	encoding.TextMarshaler
+	encoding.TextUnmarshaler
+	encoding.BinaryMarshaler
+	encoding.BinaryUnmarshaler
+	gob.GobDecoder
+	gob.GobEncoder
+	driver.Valuer
+	sql.Scanner
+	UnmarshalParam(string) error
+	GormDataType() string
+
+	String() string
+	unwrap() time.Time
+}
+
+// localDate is a generic interface for date types.
+// Contains common methods for date types.
+type localDate[T any] interface {
+	AddDate(years int, months int, days int) T
+	AddDays(days int) T
+	DaysSince(other T) int
+	Sub(other T) time.Duration
+	Add(d time.Duration) T
+
+	IsZero() bool
+	Before(other T) bool
+	After(other T) bool
+	Equal(other T) bool
+	Compare(other T) int
+
+	Day() int
+	Month() time.Month
+	Year() int
+	Weekday() time.Weekday
+
+	Date() (year int, month time.Month, day int)
+	ISOWeek() (year, week int)
+	YearDay() int
+
+	AtTime(hour, minute, second, nsec int) DateTime
+	AtClock(hour, minute, second int) DateTime
+	AtStartOfDay() DateTime
+
+	In(loc *time.Location) time.Time
+	UTC() time.Time
+	Local() time.Time
+	String() string
+}
+
+var _ localDate[Date] = (*Date)(nil)
+var _ binding = (*Date)(nil)
+var _ localDate[DateTime] = (*DateTime)(nil)
+var _ binding = (*DateTime)(nil)
+
+// AtTime returns a new [DateTime] with the same date as date but with the given time.
+// Time overflow can change the date.
+func (date Date) AtTime(hour, minute, sec, nsec int) DateTime {
+	return NewDateTime(date.t.Year(), date.t.Month(), date.t.Day(), hour, minute, sec, nsec)
+}
+
+// AtClock returns a new [DateTime] with the same date as date but with the given time without nanosecond.
+// Time overflow can change the date.
+func (date Date) AtClock(hour, minute, sec int) DateTime {
+	return NewDateTime(date.t.Year(), date.t.Month(), date.t.Day(), hour, minute, sec, 0)
+}
+
+// AtStartOfDay returns [DateTime] at the start of the day.
+func (date Date) AtStartOfDay() DateTime {
+	return DateTime(date)
+}
+
+// ----------------------------------------------------------------------------
+// DateTime type.
+// ----------------------------------------------------------------------------
 
 // DateTime represents a local date time without zone.
 type DateTime struct {
@@ -28,14 +108,6 @@ func DateTimeOf(t time.Time) DateTime {
 		return DateTime{}
 	}
 	return NewDateTime(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond())
-}
-
-// DateTimeFrom create [DateTime] from [Date] and [Time].
-func DateTimeFrom(date Date, time Time) DateTime {
-	if date.IsZero() && time.IsZero() {
-		return DateTime{}
-	}
-	return NewDateTime(date.Year(), date.Month(), date.Day(), time.Hour(), time.Minute(), time.Second(), time.Nanosecond())
 }
 
 // DateTimeNow create [DateTime] from [time.Now].

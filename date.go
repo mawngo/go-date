@@ -1,72 +1,13 @@
 package date
 
 import (
-	"database/sql"
 	"database/sql/driver"
-	"encoding"
-	"encoding/gob"
-	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"time"
 )
 
-type binding interface {
-	json.Marshaler
-	json.Unmarshaler
-	encoding.TextMarshaler
-	encoding.TextUnmarshaler
-	encoding.BinaryMarshaler
-	encoding.BinaryUnmarshaler
-	gob.GobDecoder
-	gob.GobEncoder
-	driver.Valuer
-	sql.Scanner
-	UnmarshalParam(string) error
-	GormDataType() string
-
-	String() string
-	unwrap() time.Time
-}
-
-// localDate is a generic interface for date types.
-// Contains common methods for date types.
-type localDate[T any] interface {
-	AddDate(years int, months int, days int) T
-	AddDays(days int) T
-	DaysSince(other T) int
-	Sub(other T) time.Duration
-	Add(d time.Duration) T
-
-	IsZero() bool
-	Before(other T) bool
-	After(other T) bool
-	Equal(other T) bool
-	Compare(other T) int
-
-	Day() int
-	Month() time.Month
-	Year() int
-	Weekday() time.Weekday
-
-	Date() (year int, month time.Month, day int)
-	ISOWeek() (year, week int)
-	YearDay() int
-
-	AtTime(hour, minute, second, nsec int) DateTime
-	AtClock(hour, minute, second int) DateTime
-	AtStartOfDay() DateTime
-
-	In(loc *time.Location) time.Time
-	UTC() time.Time
-	Local() time.Time
-	String() string
-}
-
-var _ localDate[Date] = (*Date)(nil)
-var _ binding = (*Date)(nil)
-var _ localDate[DateTime] = (*DateTime)(nil)
-var _ binding = (*DateTime)(nil)
+const dateTimeFormat = time.DateTime + ".999999999"
 
 // Date represents only date part of the time.
 type Date struct {
@@ -102,9 +43,18 @@ func ParseDate(s string) (Date, error) {
 	}
 
 	// Not very effective, but people should use the [time.DateOnly] instead.
-	dt, err2 := ParseDateTime(s)
+	t, err2 := time.Parse(dateTimeFormat, s)
 	if err2 == nil {
-		return DateOf(dt.t), nil
+		return DateOf(t), nil
+	}
+	if len(s) > 10 && (s[10] == 'T' || s[10] == 't') {
+		sep := string(s[10])
+		if t, err := time.Parse("2006-01-02"+sep+"15:04:05.999999999", s); err == nil {
+			return DateOf(t), nil
+		}
+		if t, err := time.Parse("2006-01-02"+sep+"15:04:05.999999999Z07:00", s); err == nil {
+			return DateOf(t), nil
+		}
 	}
 	return Date{}, err
 }
@@ -179,23 +129,6 @@ func (date Date) In(loc *time.Location) time.Time {
 // Local returns [time.Time] at the start of the day in the local location.
 func (date Date) Local() time.Time {
 	return time.Date(date.t.Year(), date.t.Month(), date.t.Day(), 0, 0, 0, 0, time.Local)
-}
-
-// AtTime returns a new [DateTime] with the same date as date but with the given time.
-// Time overflow can change the date.
-func (date Date) AtTime(hour, minute, sec, nsec int) DateTime {
-	return NewDateTime(date.t.Year(), date.t.Month(), date.t.Day(), hour, minute, sec, nsec)
-}
-
-// AtClock returns a new [DateTime] with the same date as date but with the given time without nanosecond.
-// Time overflow can change the date.
-func (date Date) AtClock(hour, minute, sec int) DateTime {
-	return NewDateTime(date.t.Year(), date.t.Month(), date.t.Day(), hour, minute, sec, 0)
-}
-
-// AtStartOfDay returns [DateTime] at the start of the day.
-func (date Date) AtStartOfDay() DateTime {
-	return DateTime(date)
 }
 
 // IsZero reports whether [Date] represents the zero IsZero instants.

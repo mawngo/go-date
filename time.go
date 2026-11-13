@@ -35,6 +35,18 @@ var _ localTime[Time] = (*Time)(nil)
 var _ localTime[DateTime] = (*DateTime)(nil)
 var _ binding = (*Time)(nil)
 
+// DateTimeFrom create [DateTime] from [Date] and [Time].
+func DateTimeFrom(date Date, time Time) DateTime {
+	if date.IsZero() && time.IsZero() {
+		return DateTime{}
+	}
+	return NewDateTime(date.Year(), date.Month(), date.Day(), time.Hour(), time.Minute(), time.Second(), time.Nanosecond())
+}
+
+// ----------------------------------------------------------------------------
+// Time type.
+// ----------------------------------------------------------------------------
+
 // Time represents only the 24 hours wall-clock time part of the time.
 // Current implementation uses [time.Time] to store the time - which is not efficient, we may consider using
 // a more efficient representation in the future.
