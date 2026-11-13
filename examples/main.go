@@ -3,15 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/mawngo/go-date"
-	"time"
 )
 
 func main() {
-	d := date.Now()
-	d.AddDay(1)
+	d := date.DateNow()
+	d.AddDays(1)
 
 	fmt.Println(d)
-	fmt.Println(d.ToUTCTime())
-	fmt.Println(d.ToLocalTime())
-	fmt.Println(d.ToLocalTimeAtClock(time.Now().Clock()))
+	fmt.Println(d.UTC())
+	fmt.Println(d.Local())
 }
