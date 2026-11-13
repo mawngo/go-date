@@ -179,6 +179,14 @@ func (clock Time) AtDate(year int, month time.Month, day int) DateTime {
 	return NewDateTime(year, month, day, clock.Hour(), clock.Minute(), clock.Second(), clock.Nanosecond())
 }
 
+func (clock Time) String() string {
+	return clock.t.Format(TimeOnlyNano)
+}
+
+// ----------------------------------------------------------------------------
+// Data bindings.
+// ----------------------------------------------------------------------------
+
 func (clock Time) MarshalJSON() ([]byte, error) {
 	if clock.IsZero() {
 		return []byte("null"), nil
@@ -298,10 +306,6 @@ func (clock *Time) Scan(value any) error {
 		return fmt.Errorf("Time.Scan: unsupported type: %T", src)
 	}
 	return nil
-}
-
-func (clock Time) String() string {
-	return clock.t.Format(TimeOnlyNano)
 }
 
 func (clock Time) unwrap() time.Time {

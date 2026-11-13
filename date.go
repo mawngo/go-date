@@ -36,7 +36,7 @@ func DateNow() Date {
 }
 
 // ParseDate parses a string in full-date format and returns the date value it represents.
-// Support [time.DateOnly] format and [time.DateTime], [YYYY-MM-DDTHH:MM:SS[.FFFFFFFFF]] and [time.RFC3339Nano] as fallback formats.
+// Support [time.DateOnly] and [DateTimeNano] formats, [time.RFC3339Nano] as a fallback format.
 func ParseDate(s string) (Date, error) {
 	t, err := time.Parse(time.DateOnly, s)
 	if err == nil {
@@ -44,6 +44,8 @@ func ParseDate(s string) (Date, error) {
 	}
 
 	// Not very effective, but people should use the [time.DateOnly] instead.
+	// The following block is from the [ParseDateTime] method.
+	// We copied it to here so this file can be standalone, copy to anywhere without modification.
 	t, err2 := time.Parse(DateTimeNano, s)
 	if err2 == nil {
 		return DateOf(t), nil
@@ -182,6 +184,10 @@ func (date Date) YearDay() int {
 func (date Date) String() string {
 	return date.t.Format(time.DateOnly)
 }
+
+// ----------------------------------------------------------------------------
+// Data bindings.
+// ----------------------------------------------------------------------------
 
 func (date *Date) Scan(value any) error {
 	switch src := value.(type) {

@@ -82,7 +82,10 @@ func (date Date) AtClock(hour, minute, sec int) DateTime {
 
 // AtStartOfDay returns [DateTime] at the start of the day.
 func (date Date) AtStartOfDay() DateTime {
-	return DateTime(date)
+	//nolint:staticcheck
+	return DateTime{
+		t: date.t,
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -113,6 +116,25 @@ func DateTimeOf(t time.Time) DateTime {
 // DateTimeNow create [DateTime] from [time.Now].
 func DateTimeNow() DateTime {
 	return DateTimeOf(time.Now())
+}
+
+// ParseDateTime parses a string and returns the DateTime it represents.
+// Support [DateTimeNano] format, [time.RFC3339Nano] as a fallback format.
+func ParseDateTime(s string) (DateTime, error) {
+	t, err := time.Parse(DateTimeNano, s)
+	if err == nil {
+		return DateTimeOf(t), nil
+	}
+	if len(s) > 10 && (s[10] == 'T' || s[10] == 't') {
+		sep := string(s[10])
+		if t, err := time.Parse("2006-01-02"+sep+"15:04:05.999999999", s); err == nil {
+			return DateTimeOf(t), nil
+		}
+		if t, err := time.Parse("2006-01-02"+sep+"15:04:05.999999999Z07:00", s); err == nil {
+			return DateTimeOf(t), nil
+		}
+	}
+	return DateTime{}, err
 }
 
 // Add returns the [DateTime] after adding the duration d.
@@ -294,24 +316,13 @@ func (dt DateTime) Local() time.Time {
 	return time.Date(dt.t.Year(), dt.t.Month(), dt.t.Day(), dt.t.Hour(), dt.t.Minute(), dt.t.Second(), dt.t.Nanosecond(), time.Local)
 }
 
-// ParseDateTime parses a string and returns the DateTime it represents.
-// Support [dateTimeFormat] format and [YYYY-MM-DDTHH:MM:SS[.FFFFFFFFF]], [time.RFC3339Nano] as fallback formats.
-func ParseDateTime(s string) (DateTime, error) {
-	t, err := time.Parse(DateTimeNano, s)
-	if err == nil {
-		return DateTimeOf(t), nil
-	}
-	if len(s) > 10 && (s[10] == 'T' || s[10] == 't') {
-		sep := string(s[10])
-		if t, err := time.Parse("2006-01-02"+sep+"15:04:05.999999999", s); err == nil {
-			return DateTimeOf(t), nil
-		}
-		if t, err := time.Parse("2006-01-02"+sep+"15:04:05.999999999Z07:00", s); err == nil {
-			return DateTimeOf(t), nil
-		}
-	}
-	return DateTime{}, err
+func (dt DateTime) String() string {
+	return dt.t.Format(DateTimeNano)
 }
+
+// ----------------------------------------------------------------------------
+// Data bindings.
+// ----------------------------------------------------------------------------
 
 func (dt DateTime) MarshalJSON() ([]byte, error) {
 	if dt.IsZero() {
@@ -435,10 +446,6 @@ func (dt *DateTime) UnmarshalParam(param string) error {
 
 func (dt DateTime) GormDataType() string {
 	return "datetime"
-}
-
-func (dt DateTime) String() string {
-	return dt.t.Format(DateTimeNano)
 }
 
 func (dt DateTime) unwrap() time.Time {
