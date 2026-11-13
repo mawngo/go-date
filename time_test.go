@@ -117,6 +117,9 @@ func TestTime(t *testing.T) {
 			}
 		}()
 
+		if dt := now.AtDate(2023, 1, 1); !dt.Equal(DateTimeFrom(NewDate(2023, 1, 1), now)) {
+			t.Fatalf("AtDate produce wrong DateTime")
+		}
 	})
 
 	t.Run("Test 24h Wrapping", func(t *testing.T) {

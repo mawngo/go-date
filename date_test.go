@@ -371,6 +371,31 @@ func TestDate(t *testing.T) {
 		if now.Compare(now) != 0 || now.Compare(after) != -1 || now.Compare(before) != 1 {
 			t.Fatalf("Compare failed")
 		}
+
+		if dt := now.AtClock(5, 15, 20); !dt.Equal(DateTimeFrom(now, NewClock(5, 15, 20))) {
+			t.Fatalf("AtClock produce wrong DateTime")
+		}
+		if dt := now.AtTime(5, 15, 20, 0); !dt.Equal(DateTimeFrom(now, NewTime(5, 15, 20, 0))) {
+			t.Fatalf("AtTime produce wrong DateTime")
+		}
+		if !now.AtStartOfDay().Equal(DateTimeFrom(now, NewClock(0, 0, 0))) {
+			t.Fatalf("AtStartOfDay produce wrong DateTime")
+		}
+
+		if date := NewDate(2025, 1, 1).UTC(); !date.Equal(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)) {
+			t.Fatalf("UTC produce wrong Date")
+		}
+		if date := NewDate(2025, 1, 1).Local(); !date.Equal(time.Date(2025, 1, 1, 0, 0, 0, 0, time.Local)) {
+			t.Fatalf("Local produce wrong Date")
+		}
+
+		tz, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if date := NewDate(2025, 1, 1).In(tz); !date.Equal(time.Date(2025, 1, 1, 0, 0, 0, 0, tz)) {
+			t.Fatalf("In produce wrong Date")
+		}
 	})
 
 	t.Run("Test ParseDate", func(t *testing.T) {

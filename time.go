@@ -32,6 +32,7 @@ type localTime[T any] interface {
 }
 
 var _ localTime[Time] = (*Time)(nil)
+var _ localTime[DateTime] = (*DateTime)(nil)
 var _ binding = (*Time)(nil)
 
 // Time represents only the 24 hours wall-clock time part of the time.

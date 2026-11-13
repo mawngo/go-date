@@ -65,6 +65,8 @@ type localDate[T any] interface {
 
 var _ localDate[Date] = (*Date)(nil)
 var _ binding = (*Date)(nil)
+var _ localDate[DateTime] = (*DateTime)(nil)
+var _ binding = (*DateTime)(nil)
 
 // Date represents only date part of the time.
 type Date struct {
