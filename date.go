@@ -1,7 +1,11 @@
 package date
 
 import (
+	"database/sql"
 	"database/sql/driver"
+	"encoding"
+	"encoding/gob"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"time"
@@ -9,6 +13,35 @@ import (
 
 // DateTimeNano [time.DateTime] format with nanosecond precision.
 const DateTimeNano = time.DateTime + ".999999999"
+
+// binding is a generic interface that defines common methods for binding date types.
+type binding[T any] interface {
+	json.Marshaler
+	json.Unmarshaler
+	encoding.TextMarshaler
+	encoding.TextUnmarshaler
+	encoding.BinaryMarshaler
+	encoding.BinaryUnmarshaler
+	gob.GobDecoder
+	gob.GobEncoder
+	driver.Valuer
+	sql.Scanner
+	UnmarshalParam(string) error
+	GormDataType() string
+	unwrap() time.Time
+
+	String() string
+	Format(layout string) string
+	AppendFormat(b []byte, layout string) []byte
+
+	IsZero() bool
+	Before(other T) bool
+	After(other T) bool
+	Equal(other T) bool
+	Compare(other T) int
+}
+
+var _ binding[Date] = (*Date)(nil)
 
 // Date represents only date part of the time.
 type Date struct {

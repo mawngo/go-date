@@ -1,50 +1,20 @@
 package date
 
 import (
-	"database/sql"
 	"database/sql/driver"
-	"encoding"
-	"encoding/gob"
-	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"time"
 )
 
-type binding interface {
-	json.Marshaler
-	json.Unmarshaler
-	encoding.TextMarshaler
-	encoding.TextUnmarshaler
-	encoding.BinaryMarshaler
-	encoding.BinaryUnmarshaler
-	gob.GobDecoder
-	gob.GobEncoder
-	driver.Valuer
-	sql.Scanner
-	UnmarshalParam(string) error
-	GormDataType() string
-	unwrap() time.Time
-
-	String() string
-	Format(layout string) string
-	AppendFormat(b []byte, layout string) []byte
-}
-
-// localDate is a generic interface for date types.
-// Contains common methods for date types.
+// localDate is a generic interface that defines common methods for date types.
 type localDate[T any] interface {
+	binding[T]
 	AddDate(years int, months int, days int) T
 	AddDays(days int) T
 	DaysSince(other T) int
 	Sub(other T) time.Duration
 	Add(d time.Duration) T
-
-	IsZero() bool
-	Before(other T) bool
-	After(other T) bool
-	Equal(other T) bool
-	Compare(other T) int
 
 	Day() int
 	Month() time.Month
@@ -62,13 +32,10 @@ type localDate[T any] interface {
 	In(loc *time.Location) time.Time
 	UTC() time.Time
 	Local() time.Time
-	String() string
 }
 
 var _ localDate[Date] = (*Date)(nil)
-var _ binding = (*Date)(nil)
 var _ localDate[DateTime] = (*DateTime)(nil)
-var _ binding = (*DateTime)(nil)
 
 // AtTime returns a new [DateTime] with the same date as date but with the given time.
 // Time overflow can change the date.

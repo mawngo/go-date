@@ -10,17 +10,11 @@ import (
 // TimeOnlyNano [time.TimeOnly] format with nanosecond precision.
 const TimeOnlyNano = time.TimeOnly + ".999999999"
 
-// localTime is a generic interface for time types.
-// Contains common methods for time types.
+// localTime is a generic interface that defines common methods for time types.
 type localTime[T any] interface {
+	binding[T]
 	Add(d time.Duration) T
 	Sub(other T) time.Duration
-
-	IsZero() bool
-	Before(other T) bool
-	After(other T) bool
-	Equal(other T) bool
-	Compare(other T) int
 
 	Hour() int
 	Minute() int
@@ -29,12 +23,10 @@ type localTime[T any] interface {
 
 	Clock() (hour, minute, second int)
 	AtDate(year int, month time.Month, day int) DateTime
-	String() string
 }
 
 var _ localTime[Time] = (*Time)(nil)
 var _ localTime[DateTime] = (*DateTime)(nil)
-var _ binding = (*Time)(nil)
 
 // DateTimeFrom create [DateTime] from [Date] and [Time].
 func DateTimeFrom(date Date, time Time) DateTime {

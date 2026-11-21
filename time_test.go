@@ -6,14 +6,16 @@ import (
 	"time"
 )
 
-func runTimeBasicTest[T localTime[T]](t *testing.T, init func(t time.Time) T) {
+type timePtr[T any] interface {
+	localTime[T]
+	*T
+}
+
+func runTimeBasicTest[T any, P timePtr[T]](t *testing.T, init func(t time.Time) T) {
 	now := time.Now()
 	local := init(now)
 	t.Run("Test Access Time Properties", func(t *testing.T) {
-		if zero := init(time.Time{}); !zero.IsZero() {
-			t.Fatalf("Expected zero time, got %v", zero)
-		}
-
+		local := P(&local)
 		if local.Hour() != now.Hour() {
 			t.Fatalf("Hour: Expected %d, got %d", now.Hour(), local.Hour())
 		}
@@ -35,6 +37,10 @@ func runTimeBasicTest[T localTime[T]](t *testing.T, init func(t time.Time) T) {
 	})
 
 	t.Run("Test Nanoseconds", func(t *testing.T) {
+		init := func(t time.Time) P {
+			v := init(t)
+			return P(&v)
+		}
 		now := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 123456789, time.UTC)
 		if got := init(now.Truncate(time.Second)).String(); strings.Contains(got, ".") {
 			t.Fatalf("String mismatch: expected no fraction, got %s", got)

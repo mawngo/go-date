@@ -8,7 +8,7 @@ import (
 )
 
 type bindingPtr[T any] interface {
-	binding
+	binding[T]
 	*T
 }
 
@@ -284,6 +284,10 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 
 		t.Run("Zero", func(t *testing.T) {
 			zero := init(time.Time{})
+			if !P(&zero).IsZero() {
+				t.Fatalf("Expected zero, got %v", zero)
+			}
+
 			zb, err := P(&zero).MarshalBinary()
 			if err != nil {
 				t.Fatal(err)
@@ -299,13 +303,16 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 	})
 }
 
-func runDateBasicTest[T localDate[T]](t *testing.T, init func(time.Time) T) {
+type datePtr[T any] interface {
+	localDate[T]
+	*T
+}
+
+func runDateBasicTest[T any, P datePtr[T]](t *testing.T, init func(time.Time) T) {
 	now := time.Now()
 	local := init(now)
 	t.Run("Test Access Date Properties", func(t *testing.T) {
-		if zero := init(time.Time{}); !zero.IsZero() {
-			t.Fatalf("Expected zero date, got %v", zero)
-		}
+		local := P(&local)
 		if local.Day() != now.Day() {
 			t.Fatalf("Day: Expected %d, got %d", now.Day(), local.Day())
 		}
