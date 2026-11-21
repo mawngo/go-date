@@ -28,7 +28,6 @@ type binding[T any] interface {
 	sql.Scanner
 	UnmarshalParam(string) error
 	GormDataType() string
-	unwrap() time.Time
 
 	String() string
 	Format(layout string) string
@@ -362,8 +361,4 @@ func (date Date) MarshalText() ([]byte, error) {
 
 func (date Date) GormDataType() string {
 	return "date"
-}
-
-func (date Date) unwrap() time.Time {
-	return date.t
 }

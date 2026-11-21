@@ -317,10 +317,6 @@ func (clock *Time) Scan(value any) error {
 	return nil
 }
 
-func (clock Time) unwrap() time.Time {
-	return clock.t
-}
-
 func (clock Time) GormDataType() string {
 	return "time"
 }

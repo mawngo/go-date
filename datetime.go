@@ -433,7 +433,3 @@ func (dt *DateTime) UnmarshalParam(param string) error {
 func (dt DateTime) GormDataType() string {
 	return "datetime"
 }
-
-func (dt DateTime) unwrap() time.Time {
-	return dt.t
-}

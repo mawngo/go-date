@@ -18,7 +18,7 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 		local := init(now)
 
 		for _, format := range []string{time.RFC3339Nano, time.RFC1123Z, time.RubyDate} {
-			expected := P(&local).unwrap().Format(format)
+			expected := P(&local).Format(format)
 			if P(&local).Format(format) != expected {
 				t.Fatalf("Format mismatch: expected %s, got %s", expected, P(&local).Format(format))
 			}
@@ -78,7 +78,7 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 			if err := P(&zeroD).Scan(nil); err != nil {
 				t.Fatal(err)
 			}
-			if !P(&zeroD).unwrap().IsZero() {
+			if !P(&zeroD).IsZero() {
 				t.Fatal("Scan nil mismatch: expected zero")
 			}
 		})
@@ -135,7 +135,7 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 			if err := P(&zeroD).UnmarshalJSON([]byte("null")); err != nil {
 				t.Fatal(err)
 			}
-			if !P(&zeroD).unwrap().IsZero() {
+			if !P(&zeroD).IsZero() {
 				t.Fatal("Zero UnmarshalJson mismatch: expected zero")
 			}
 		})
@@ -190,7 +190,7 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 			if err := P(&zeroD).UnmarshalText([]byte("")); err != nil {
 				t.Fatal(err)
 			}
-			if !P(&zeroD).unwrap().IsZero() {
+			if !P(&zeroD).IsZero() {
 				t.Fatal("Zero UnmarshalText mismatch: expected zero")
 			}
 		})
@@ -226,7 +226,7 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 			if err := P(&zeroD).UnmarshalParam(""); err != nil {
 				t.Fatal(err)
 			}
-			if !P(&zeroD).unwrap().IsZero() {
+			if !P(&zeroD).IsZero() {
 				t.Fatal("Zero UnmarshalParam mismatch: expected zero")
 			}
 		})
@@ -259,7 +259,7 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 			if err := P(&zeroD).GobDecode(zb); err != nil {
 				t.Fatal(err)
 			}
-			if !P(&zeroD).unwrap().IsZero() {
+			if !P(&zeroD).IsZero() {
 				t.Fatal("Zero Gob Encode/Decode mismatch: expected zero")
 			}
 		})
@@ -296,7 +296,7 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 			if err := P(&zeroD).UnmarshalBinary(zb); err != nil {
 				t.Fatal(err)
 			}
-			if !P(&zeroD).unwrap().IsZero() {
+			if !P(&zeroD).IsZero() {
 				t.Fatal("Zero Binary Marshal/Unmarshal mismatch: expected zero")
 			}
 		})
