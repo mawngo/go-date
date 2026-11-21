@@ -208,7 +208,11 @@ func (dt DateTime) DaysSince(other DateTime) int {
 	return int(deltaUnix / 86400)
 }
 
-// IsZero reports whether [Date] represents the zero IsZero instants.
+// IsZero reports whether [DateTime] represents the zero instant.
+//
+// Note: this method delegate to [time.Time.IsZero], so a valid year-1 date (January 1, year 1, 00:00:00 UTC) is
+// indistinguishable from the unset zero value.
+// See [time.Time.IsZero].
 func (dt DateTime) IsZero() bool {
 	return dt.t.IsZero()
 }

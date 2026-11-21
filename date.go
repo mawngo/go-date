@@ -166,7 +166,11 @@ func (date Date) Local() time.Time {
 	return time.Date(date.t.Year(), date.t.Month(), date.t.Day(), 0, 0, 0, 0, time.Local)
 }
 
-// IsZero reports whether [Date] represents the zero IsZero instants.
+// IsZero reports whether [Date] represents the zero instant.
+//
+// Note: this method delegate to [time.Time.IsZero], so a valid year-1 date (January 1, year 1, 00:00:00 UTC) is
+// indistinguishable from the unset zero value.
+// See [time.Time.IsZero].
 func (date Date) IsZero() bool {
 	return date.t.IsZero()
 }
