@@ -214,12 +214,14 @@ func (date Date) YearDay() int {
 	return date.t.YearDay()
 }
 
+// String returns the time formatted in [time.DateOnly].
 func (date Date) String() string {
 	return date.t.Format(time.DateOnly)
 }
 
 // Format returns a textual representation of the time value formatted according
 // to the layout defined by the argument.
+// The reference time is 00:00:00 UTC.
 //
 // See [time.Time.Format].
 func (date Date) Format(layout string) string {
@@ -228,6 +230,7 @@ func (date Date) Format(layout string) string {
 
 // AppendFormat is like [Date.Format] but appends the textual
 // representation to b and returns the extended buffer.
+// The reference time is 00:00:00 UTC.
 func (date Date) AppendFormat(b []byte, layout string) []byte {
 	return date.t.AppendFormat(b, layout)
 }

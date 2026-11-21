@@ -171,12 +171,14 @@ func (clock Time) AtDate(year int, month time.Month, day int) DateTime {
 	return NewDateTime(year, month, day, clock.Hour(), clock.Minute(), clock.Second(), clock.Nanosecond())
 }
 
+// String returns the time formatted in [TimeOnlyNano].
 func (clock Time) String() string {
 	return clock.t.Format(TimeOnlyNano)
 }
 
 // Format returns a textual representation of the time value formatted according
 // to the layout defined by the argument.
+// The reference date is 1970-01-01 UTC.
 //
 // See [time.Time.Format].
 func (clock Time) Format(layout string) string {
@@ -185,6 +187,7 @@ func (clock Time) Format(layout string) string {
 
 // AppendFormat is like [Date.Format] but appends the textual
 // representation to b and returns the extended buffer.
+// The reference date is 1970-01-01 UTC.
 func (clock Time) AppendFormat(b []byte, layout string) []byte {
 	return clock.t.AppendFormat(b, layout)
 }

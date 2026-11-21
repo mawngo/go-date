@@ -285,12 +285,14 @@ func (dt DateTime) Local() time.Time {
 	return time.Date(dt.t.Year(), dt.t.Month(), dt.t.Day(), dt.t.Hour(), dt.t.Minute(), dt.t.Second(), dt.t.Nanosecond(), time.Local)
 }
 
+// String returns the time formatted in [DateTimeNano].
 func (dt DateTime) String() string {
 	return dt.t.Format(DateTimeNano)
 }
 
 // Format returns a textual representation of the time value formatted according
 // to the layout defined by the argument.
+// The reference time zone is UTC.
 //
 // See [time.Time.Format].
 func (dt DateTime) Format(layout string) string {
@@ -299,6 +301,7 @@ func (dt DateTime) Format(layout string) string {
 
 // AppendFormat is like [Date.Format] but appends the textual
 // representation to b and returns the extended buffer.
+// The reference time zone is UTC.
 func (dt DateTime) AppendFormat(b []byte, layout string) []byte {
 	return dt.t.AppendFormat(b, layout)
 }
