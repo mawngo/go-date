@@ -26,7 +26,7 @@ func main() {
 	fmt.Println(d.AtWeekday(time.Saturday, -1)) // 2026-11-07
 	// 2 week ago Saturday
 	// d is Saturday, so if we -7, it falls right on the previous Saturday => we need to -8
-	fmt.Println(d.AtWeekday(time.Saturday, -8)) // 2026-11-31
+	fmt.Println(d.AtWeekday(time.Saturday, -8)) // 2026-10-31
 
 	// Convert to date.DateTime
 	dt := d.AtClockNano(12, 0, 0, 0)
@@ -49,4 +49,11 @@ func main() {
 	fmt.Println(ym.AddMonths(1)) // 2026-12
 	// To date
 	fmt.Println(ym.AtStartOfMonth()) // 2026-11-01
+
+	// Only month and day
+	md := date.NewMonthDay(2, 29)
+	// To date
+	d2, err := md.AtYear(1998)
+	fmt.Println(err.Error()) // date.MonthDay.AtYear: invalid year 1998 for month-day 02-29
+	fmt.Println(d2.String()) // 1998-02-28 (clamped)
 }

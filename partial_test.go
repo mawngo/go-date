@@ -90,3 +90,70 @@ func TestYearMonth(t *testing.T) {
 		}
 	})
 }
+
+func TestMonthDay(t *testing.T) {
+	runBindingTest(t, MonthDayOf, MonthDayOnly, false)
+
+	t.Run("Test Construct", func(t *testing.T) {
+		now := time.Now()
+		local := MonthDayOf(now)
+		if !local.Equal(NewMonthDay(now.Month(), now.Day())) {
+			t.Fatalf("Expected constructed time give different result")
+		}
+
+		t.Run("Checked", func(t *testing.T) {
+			if v, err := NewMonthDayChecked(now.Month(), now.Day()); err != nil || !v.Equal(NewMonthDay(now.Month(), now.Day())) {
+				t.Fatalf("NewMonthDayChecked valid: got %v, %v", v, err)
+			}
+			if _, err := NewMonthDayChecked(02, 31); err == nil {
+				t.Fatalf("NewMonthDayChecked invalid: expected error, got nil")
+			}
+		})
+	})
+
+	t.Run("Test Access MonthDay Properties", func(t *testing.T) {
+		now := time.Now()
+		local := MonthDayOf(now)
+		if local.Month() != now.Month() {
+			t.Fatalf("Month: Expected %d, got %d", now.Month(), local.Month())
+		}
+		if local.Day() != now.Day() {
+			t.Fatalf("Day: Expected %d, got %d", now.Day(), local.Day())
+		}
+		y, m := local.MonthDay()
+		y2, m2 := now.Month(), now.Day()
+		if y != y2 || m != m2 {
+			t.Fatalf("MonthDay mismatch")
+		}
+	})
+
+	t.Run("Test MonthDay Operations", func(t *testing.T) {
+		local := NewMonthDay(02, 29)
+		if v, err := local.AtYear(2000); err != nil || !v.Equal(NewDate(2000, 2, 29)) {
+			t.Fatalf("AtYear failed %v", v)
+		}
+		if v, err := local.AtYear(1998); err == nil || !v.Equal(NewDate(1998, 2, 28)) {
+			t.Fatalf("AtYear failed %v", v)
+		}
+	})
+
+	t.Run("Test Clamping", func(t *testing.T) {
+		if local := NewMonthDay(02, 31); !local.Equal(NewMonthDay(02, 29)) {
+			t.Fatalf("Clamp mismatch: expected 02-29, got %v", local)
+		}
+	})
+
+	t.Run("Test ParseMonthDay", func(t *testing.T) {
+		for _, in := range []string{"2023-10-15", "10-15"} {
+			if _, err := ParseMonthDay(in); err != nil {
+				t.Fatalf("ParseMonthDay(%q) error %v", in, err)
+			}
+		}
+
+		for _, in := range []string{"", "2023", "2023-13-01", "2023-10-15T", "02-31"} {
+			if _, err := ParseMonthDay(in); err == nil {
+				t.Fatalf("ParseMonthDay(%q) expected error, got nil", in)
+			}
+		}
+	})
+}

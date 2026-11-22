@@ -15,6 +15,7 @@ const (
 )
 
 var _ binding[YearMonth] = (*YearMonth)(nil)
+var _ binding[MonthDay] = (*MonthDay)(nil)
 
 // YearMonth represents only the year and month part of the time.
 type YearMonth struct {
@@ -294,5 +295,259 @@ func (ym *YearMonth) UnmarshalParam(param string) error {
 		return err
 	}
 	*ym = t
+	return nil
+}
+
+// ----------------------------------------------------------------------------
+// Month Day.
+// ----------------------------------------------------------------------------
+
+// MonthDay represents only the month and day part of the time.
+type MonthDay struct {
+	t time.Time
+}
+
+// NewMonthDay creates a [MonthDay] from the month and day,
+// clamping invalid values to the valid ranges defined by [ClampDate].
+func NewMonthDay(month time.Month, day int) MonthDay {
+	_, month, day = ClampDate(2000, month, day)
+	return MonthDay{
+		t: time.Date(2000, month, day, 0, 0, 0, 0, time.UTC),
+	}
+}
+
+// NewMonthDayChecked creates a [MonthDay] from the month and day,
+// returning an error if any component is outside the valid ranges defined by [ClampDate].
+func NewMonthDayChecked(month time.Month, day int) (MonthDay, error) {
+	_, cmonth, cday := ClampDate(2000, month, day)
+	if cmonth != month {
+		return MonthDay{}, fmt.Errorf("date.NewMonthDayChecked: invalid month %d (clamped into %d)", month, cmonth)
+	}
+	if cday != day {
+		return MonthDay{}, fmt.Errorf("date.NewMonthDayChecked: invalid day %d (clamped into %d)", day, cday)
+	}
+	return MonthDay{
+		t: time.Date(2000, month, day, 0, 0, 0, 0, time.UTC),
+	}, nil
+}
+
+// MonthDayOf create [MonthDay] from [time.Time].
+func MonthDayOf(t time.Time) MonthDay {
+	if t.IsZero() {
+		return MonthDay{}
+	}
+	return NewMonthDay(t.Month(), t.Day())
+}
+
+// ParseMonthDay parses a string in [MonthDayOnly] format and returns the [MonthDay] it represents.
+// Support [time.DateOnly] as a fallback format.
+func ParseMonthDay(s string) (MonthDay, error) {
+	t, err := time.Parse(MonthDayOnly, s)
+	if err == nil {
+		return MonthDayOf(t), nil
+	}
+	if t, err := time.Parse(time.DateOnly, s); err == nil {
+		return MonthDayOf(t), nil
+	}
+	return MonthDay{}, err
+}
+
+// Month returns the month of the year specified by [MonthDay].
+func (md MonthDay) Month() time.Month {
+	return md.t.Month()
+}
+
+// Day returns the day of the month specified by [MonthDay].
+func (md MonthDay) Day() int {
+	return md.t.Day()
+}
+
+// MonthDay returns the month and day in which [MonthDay] occurs.
+func (md MonthDay) MonthDay() (month time.Month, day int) {
+	return md.t.Month(), md.t.Day()
+}
+
+// AtYear returns a [Date] with the given year and the month and day from [MonthDay],
+// clamping the date components to the valid ranges defined by [ClampDate].
+//
+// If the resulting date is invalid (for example, February 29 in a non-leap year),
+// the clamped date is returned along with an error.
+func (md MonthDay) AtYear(year int) (Date, error) {
+	d := NewDate(year, md.t.Month(), md.t.Day())
+	if year != d.Year() || md.t.Month() != d.Month() || md.t.Day() != d.Day() {
+		return d, fmt.Errorf("date.MonthDay.AtYear: invalid year %d for month-day %s", year, md.String())
+	}
+	return d, nil
+}
+
+// String returns the month-day formatted in [MonthDayOnly].
+func (md MonthDay) String() string {
+	return md.t.Format(MonthDayOnly)
+}
+
+// Format returns a textual representation of the month-day value formatted according
+// to the layout defined by the argument.
+// The reference time is 00:00:00 UTC in the year 2000.
+//
+// See [time.Time.Format].
+func (md MonthDay) Format(layout string) string {
+	return md.t.Format(layout)
+}
+
+// AppendFormat is like [MonthDay.Format] but appends the textual
+// representation to b and returns the extended buffer.
+// The reference time is 00:00:00 UTC in the year 2000.
+func (md MonthDay) AppendFormat(b []byte, layout string) []byte {
+	return md.t.AppendFormat(b, layout)
+}
+
+// IsZero reports whether monthDay represents the zero instant.
+func (md MonthDay) IsZero() bool {
+	return md.t.IsZero()
+}
+
+// Before reports whether the [MonthDay] is before other [MonthDay].
+func (md MonthDay) Before(other MonthDay) bool {
+	return md.t.Before(other.t)
+}
+
+// After reports whether the [MonthDay] is after other [MonthDay].
+func (md MonthDay) After(other MonthDay) bool {
+	return md.t.After(other.t)
+}
+
+// Equal compare 2 month-day.
+func (md MonthDay) Equal(other MonthDay) bool {
+	return md.t.Equal(other.t)
+}
+
+// Compare compares the month-day with other. If md is before other, it returns -1;
+// if md is after other, it returns +1; if they're the same, it returns 0.
+func (md MonthDay) Compare(other MonthDay) int {
+	return md.t.Compare(other.t)
+}
+
+// ----------------------------------------------------------------------------
+// Data bindings.
+// ----------------------------------------------------------------------------
+
+func (md MonthDay) MarshalJSON() ([]byte, error) {
+	if md.IsZero() {
+		return []byte("null"), nil
+	}
+	b := make([]byte, 0, len(MonthDayOnly)+len(`""`))
+	b = append(b, '"')
+	b = md.t.AppendFormat(b, MonthDayOnly)
+	b = append(b, '"')
+	return b, nil
+}
+
+func (md *MonthDay) UnmarshalJSON(b []byte) error {
+	data := string(b)
+	if data == "null" {
+		return nil
+	}
+	// TODO(https://go.dev/issue/47353): Properly unescape a JSON string.
+	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
+		return errors.New("MonthDay.UnmarshalJSON: input is not a JSON string")
+	}
+	data = data[len(`"`) : len(data)-len(`"`)]
+	t, err := ParseMonthDay(data)
+	if err != nil {
+		return err
+	}
+	*md = t
+	return nil
+}
+
+func (md MonthDay) MarshalText() ([]byte, error) {
+	if md.IsZero() {
+		return nil, nil
+	}
+	return []byte(md.t.Format(MonthDayOnly)), nil
+}
+
+func (md *MonthDay) UnmarshalText(text []byte) error {
+	param := string(text)
+	if param == "" {
+		return nil
+	}
+	t, err := ParseMonthDay(param)
+	if err != nil {
+		return err
+	}
+	*md = t
+	return nil
+}
+
+func (md MonthDay) MarshalBinary() ([]byte, error) {
+	return md.t.MarshalBinary()
+}
+
+func (md *MonthDay) UnmarshalBinary(b []byte) error {
+	t := time.Time{}
+	err := (&t).UnmarshalBinary(b)
+	if err != nil {
+		return err
+	}
+	*md = MonthDayOf(t)
+	return nil
+}
+
+func (md MonthDay) GobEncode() ([]byte, error) {
+	return md.t.GobEncode()
+}
+
+func (md *MonthDay) GobDecode(b []byte) error {
+	t := time.Time{}
+	err := (&t).GobDecode(b)
+	if err != nil {
+		return err
+	}
+	*md = MonthDayOf(t)
+	return nil
+}
+
+func (md MonthDay) Value() (driver.Value, error) {
+	if md.IsZero() {
+		return nil, nil
+	}
+	return md.t.Format(MonthDayOnly), nil
+}
+
+func (md *MonthDay) Scan(value any) error {
+	switch src := value.(type) {
+	case nil:
+		return nil
+	case string:
+		t, err := ParseMonthDay(src)
+		if err != nil {
+			return err
+		}
+		*md = t
+	case []byte:
+		t, err := ParseMonthDay(string(src))
+		if err != nil {
+			return err
+		}
+		*md = t
+	case time.Time:
+		*md = MonthDayOf(src)
+	default:
+		return fmt.Errorf("MonthDay.Scan: unsupported type: %T", src)
+	}
+	return nil
+}
+
+// UnmarshalParam add support for gin param binding.
+func (md *MonthDay) UnmarshalParam(param string) error {
+	if param == "" {
+		return nil
+	}
+	t, err := ParseMonthDay(param)
+	if err != nil {
+		return err
+	}
+	*md = t
 	return nil
 }
