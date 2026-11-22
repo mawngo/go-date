@@ -29,6 +29,30 @@ func runBindingTest[T any, P bindingPtr[T]](t *testing.T, init func(time time.Ti
 		}
 	})
 
+	t.Run("Compare", func(t *testing.T) {
+		now := init(time.Date(2023, 06, 15, 12, 30, 35, 30, time.UTC))
+		before := init(time.Date(2022, 05, 14, 11, 25, 30, 15, time.UTC))
+		after := init(time.Date(2024, 07, 18, 14, 40, 45, 60, time.UTC))
+		if !P(&now).Equal(init(time.Date(2023, 06, 15, 12, 30, 35, 30, time.UTC))) || P(&now).Equal(after) || P(&now).Equal(before) {
+			t.Fatalf("Equally failed")
+		}
+		if !P(&now).After(before) || P(&now).After(after) || P(&now).After(now) {
+			t.Fatalf("After failed")
+		}
+		if !P(&now).Before(after) || P(&now).Before(before) || P(&now).Before(now) {
+			t.Fatalf("Before failed")
+		}
+		//nolint:gocritic
+		if P(&now).Compare(now) != 0 || P(&now).Compare(after) != -1 || P(&now).Compare(before) != 1 {
+			t.Fatalf("Compare failed")
+		}
+		zero := init(time.Time{})
+		var zeroT T
+		if !P(&zero).Equal(init(time.Time{})) || !P(&zero).IsZero() || !P(&zeroT).IsZero() || !P(&zero).Equal(zeroT) {
+			t.Fatalf("Zero failed")
+		}
+	})
+
 	t.Run("String/Scan/Value", func(t *testing.T) {
 		now := time.Now()
 		local := init(now)
@@ -370,11 +394,6 @@ func TestDate(t *testing.T) {
 		now := NewDate(2023, 10, 15)
 		nextDay := NewDate(2023, 10, 16)
 		before := NewDate(2019, time.January, 1)
-		after := NewDate(2023, 12, 15)
-
-		if !now.Equal(NewDate(2023, 10, 15)) || now.Equal(nextDay) {
-			t.Fatalf("Equally failed")
-		}
 
 		if sub := nextDay.Sub(now); sub != 24*time.Hour {
 			t.Fatalf("Sub failed: expected 24 hours, got %v", nextDay.Sub(now))
@@ -394,16 +413,6 @@ func TestDate(t *testing.T) {
 		}
 		if days := now.DaysSince(before); days != 1748 {
 			t.Fatalf("Sub failed: expected 1748 days, got %v", now.DaysSince(before))
-		}
-		if !now.After(before) || now.After(after) || now.After(now) {
-			t.Fatalf("After failed")
-		}
-		if !now.Before(after) || now.Before(before) || now.Before(now) {
-			t.Fatalf("Before failed")
-		}
-		//nolint:gocritic
-		if now.Compare(now) != 0 || now.Compare(after) != -1 || now.Compare(before) != 1 {
-			t.Fatalf("Compare failed")
 		}
 
 		if dt := now.AtClock(5, 15, 20); !dt.Equal(NewDateTime(now.Year(), now.Month(), now.Day(), 5, 15, 20, 0)) {

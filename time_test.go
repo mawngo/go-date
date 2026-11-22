@@ -111,27 +111,12 @@ func TestTime(t *testing.T) {
 
 	t.Run("Test Time Operations", func(t *testing.T) {
 		now := NewTime(23, 10, 15)
-		before := NewTime(19, 0, 0)
-		after := NewTime(23, 15, 0)
 
-		if !now.Equal(NewTimeNano(23, 10, 15, 0)) || now.Equal(NewTimeNano(23, 10, 15, 1)) {
-			t.Fatalf("Equally failed")
-		}
 		if sub := now.Sub(NewTimeNano(19, 0, 15, 0)); sub != (4*time.Hour + 10*time.Minute) {
 			t.Fatalf("Sub failed: expected 4 hours, got %v", now.Sub(NewTimeNano(4, 0, 15, 0)))
 		}
 		if add := now.Add(10 * time.Minute); !add.Equal(NewTimeNano(23, 20, 15, 0)) {
 			t.Fatalf("Add failed")
-		}
-		if !now.After(before) || now.After(after) || now.After(now) {
-			t.Fatalf("After failed")
-		}
-		if !now.Before(after) || now.Before(before) || now.Before(now) {
-			t.Fatalf("Before failed")
-		}
-		//nolint:gocritic
-		if now.Compare(now) != 0 || now.Compare(after) != -1 || now.Compare(before) != 1 {
-			t.Fatalf("Compare failed")
 		}
 
 		func() {

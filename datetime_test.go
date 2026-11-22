@@ -42,11 +42,6 @@ func TestDateTime(t *testing.T) {
 		now := NewDateTime(2023, 10, 15, 12, 10, 15, 0)
 		nextDay := NewDateTime(2023, 10, 16, 14, 15, 15, 0)
 		before := NewDateTime(2019, time.January, 1, 0, 0, 0, 0)
-		after := NewDateTime(2023, 12, 15, 14, 15, 10, 0)
-
-		if !now.Equal(NewDateTime(2023, 10, 15, 12, 10, 15, 0)) || now.Equal(nextDay) {
-			t.Fatalf("Equally failed")
-		}
 
 		if sub := nextDay.Sub(now); sub != 26*time.Hour+5*time.Minute {
 			t.Fatalf("Sub failed: expected 26 hours, got %v", nextDay.Sub(now))
@@ -63,16 +58,6 @@ func TestDateTime(t *testing.T) {
 		}
 		if days := now.DaysSince(before); days != 1748 {
 			t.Fatalf("Sub failed: expected 1748 days, got %v", now.DaysSince(before))
-		}
-		if !now.After(before) || now.After(after) || now.After(now) {
-			t.Fatalf("After failed")
-		}
-		if !now.Before(after) || now.Before(before) || now.Before(now) {
-			t.Fatalf("Before failed")
-		}
-		//nolint:gocritic
-		if now.Compare(now) != 0 || now.Compare(after) != -1 || now.Compare(before) != 1 {
-			t.Fatalf("Compare failed")
 		}
 
 		if dt := now.AtDate(2023, 1, 1); !dt.Equal(NewDateTime(2023, 1, 1, now.Hour(), now.Minute(), now.Second(), now.Nanosecond())) {
