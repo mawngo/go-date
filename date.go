@@ -97,9 +97,8 @@ func ParseDate(s string) (Date, error) {
 // AddDate add years, months, and days to date.
 // See [time.Time.AddDate].
 func (date Date) AddDate(years int, months int, days int) Date {
-	return Date{
-		t: date.t.AddDate(years, months, days),
-	}
+	d := date.t.AddDate(years, months, days)
+	return NewDate(d.Year(), d.Month(), d.Day())
 }
 
 // AddDays add days to date.

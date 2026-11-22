@@ -51,10 +51,7 @@ func (date Date) AtClock(hour, minute, sec int) DateTime {
 
 // AtStartOfDay returns [DateTime] at the start of the day.
 func (date Date) AtStartOfDay() DateTime {
-	//nolint:staticcheck
-	return DateTime{
-		t: date.t,
-	}
+	return NewDateTime(date.t.Year(), date.t.Month(), date.t.Day(), 0, 0, 0, 0)
 }
 
 // ----------------------------------------------------------------------------
@@ -188,9 +185,8 @@ func (dt DateTime) AtDate(year int, month time.Month, day int) DateTime {
 // AddDate add years, months, and days to date.
 // See [time.Time.AddDate].
 func (dt DateTime) AddDate(years int, months int, days int) DateTime {
-	return DateTime{
-		t: dt.t.AddDate(years, months, days),
-	}
+	date := dt.t.AddDate(years, months, days)
+	return NewDateTime(date.Year(), date.Month(), date.Day(), dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond())
 }
 
 // AddDays add days to date.
