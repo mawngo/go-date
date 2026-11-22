@@ -64,11 +64,56 @@ type DateTime struct {
 }
 
 // NewDateTime create [DateTime].
-// Time overflow can change the date.
+// Invalid values are clamped into valid range as defined by [ClampDate] and [ClampTime].
 func NewDateTime(year int, month time.Month, day int, hour int, min int, sec int, nsec int) DateTime {
+	year, month, day = ClampDate(year, month, day)
+	hour, min, sec, nsec = ClampTime(hour, min, sec, nsec)
 	return DateTime{
 		t: time.Date(year, month, day, hour, min, sec, nsec, time.UTC),
 	}
+}
+
+// NewDateTimeChecked create [DateTime] from year, month, day, hour, minute, second, and nanosecond,
+// returning an error if any component is outside the valid ranges defined by [ClampDate] and [ClampTime].
+func NewDateTimeChecked(year int, month time.Month, day int, hour int, min int, sec int, nsec int) (DateTime, error) {
+	cyear, cmonth, cday := ClampDate(year, month, day)
+	if cyear != year {
+		return DateTime{}, fmt.Errorf("date.NewDateTimeChecked: invalid year %d (clamped into %d)", year, cyear)
+	}
+	if cmonth != month {
+		return DateTime{}, fmt.Errorf("date.NewDateTimeChecked: invalid month %d (clamped into %d)", month, cmonth)
+	}
+	if cday != day {
+		return DateTime{}, fmt.Errorf("date.NewDateTimeChecked: invalid day %d (clamped into %d)", day, cday)
+	}
+
+	chour, cmin, csec, cnsec := ClampTime(hour, min, sec, nsec)
+	if chour != hour {
+		return DateTime{}, fmt.Errorf("date.NewDateTimeChecked: invalid hour %d (clamped into %d)", hour, chour)
+	}
+	if cmin != min {
+		return DateTime{}, fmt.Errorf("date.NewDateTimeChecked: invalid minute %d (clamped into %d)", min, cmin)
+	}
+	if csec != sec {
+		return DateTime{}, fmt.Errorf("date.NewDateTimeChecked: invalid second %d (clamped into %d)", sec, csec)
+	}
+	if cnsec != nsec {
+		return DateTime{}, fmt.Errorf("date.NewDateTimeChecked: invalid nanosecond %d (clamped into %d)", nsec, cnsec)
+	}
+	return NewDateTime(year, month, day, hour, min, sec, nsec), nil
+}
+
+// ClampTime clamps the time components into the inclusive range:
+//
+// - Hour: [0, 23].
+// - Minute and second: [0, 59].
+// - Nanosecond: [0, 999999999].
+func ClampTime(hour, minute, sec, nsec int) (int, int, int, int) {
+	hour = min(max(hour, 0), 23)
+	minute = min(max(minute, 0), 59)
+	sec = min(max(sec, 0), 59)
+	nsec = min(max(nsec, 0), 999999999)
+	return hour, minute, sec, nsec
 }
 
 // DateTimeOf create [DateTime] from [time.Time].

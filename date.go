@@ -46,11 +46,48 @@ type Date struct {
 	t time.Time
 }
 
-// NewDate create [Date] from year, month, and day.
+// NewDate creates a [Date] from the year, month, and day,
+// clamping invalid values to the valid ranges defined by [ClampDate].
 func NewDate(year int, month time.Month, day int) Date {
+	year, month, day = ClampDate(year, month, day)
 	return Date{
 		t: time.Date(year, month, day, 0, 0, 0, 0, time.UTC),
 	}
+}
+
+// NewDateChecked creates a [Date] from the year, month, and day,
+// returning an error if any component is outside the valid ranges defined by [ClampDate].
+func NewDateChecked(year int, month time.Month, day int) (Date, error) {
+	cyear, cmonth, cday := ClampDate(year, month, day)
+	if cyear != year {
+		return Date{}, fmt.Errorf("date.NewDateChecked: invalid year %d (clamped into %d)", year, cyear)
+	}
+	if cmonth != month {
+		return Date{}, fmt.Errorf("date.NewDateChecked: invalid month %d (clamped into %d)", month, cmonth)
+	}
+	if cday != day {
+		return Date{}, fmt.Errorf("date.NewDateChecked: invalid day %d (clamped into %d)", day, cday)
+	}
+	return Date{
+		t: time.Date(year, month, day, 0, 0, 0, 0, time.UTC),
+	}, nil
+}
+
+// ClampDate clamps the date components to the following inclusive ranges:
+//
+// - Year: unchanged.
+// - Month: [1, 12].
+// - Day: [1, the number of days in the clamped month].
+func ClampDate(year int, month time.Month, day int) (int, time.Month, int) {
+	month = min(max(month, time.January), time.December)
+	if day > 28 {
+		// Day 0 of the next month is the last day of the current month.
+		daysInMonth := time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
+		day = min(day, daysInMonth)
+	} else {
+		day = max(day, 1)
+	}
+	return year, month, day
 }
 
 // DateOf create [Date] from [time.Time].

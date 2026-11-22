@@ -28,14 +28,6 @@ type localTime[T any] interface {
 var _ localTime[Time] = (*Time)(nil)
 var _ localTime[DateTime] = (*DateTime)(nil)
 
-// DateTimeFrom create [DateTime] from [Date] and [Time].
-func DateTimeFrom(date Date, time Time) DateTime {
-	if date.IsZero() && time.IsZero() {
-		return DateTime{}
-	}
-	return NewDateTime(date.Year(), date.Month(), date.Day(), time.Hour(), time.Minute(), time.Second(), time.Nanosecond())
-}
-
 // ----------------------------------------------------------------------------
 // Time type.
 // ----------------------------------------------------------------------------
@@ -47,24 +39,35 @@ type Time struct {
 	t time.Time
 }
 
-// NewTime create [Time] from hour, minute, second, and nanosecond.
-// Time overflow will be wrapped around.
+// NewTime creates a [Time] from the hour, minute, second, and nanosecond,
+// clamping invalid values to the valid ranges defined by [ClampTime].
 func NewTime(hour, min, sec, nsec int) Time {
-	t := time.Date(1970, time.January, 1, hour, min, sec, nsec, time.UTC)
+	hour, min, sec, nsec = ClampTime(hour, min, sec, nsec)
 	return Time{
-		// Set the date again to prevent the hour overflow changing the date.
-		t: time.Date(1970, time.January, 1, t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), time.UTC),
+		t: time.Date(1970, time.January, 1, hour, min, sec, nsec, time.UTC),
 	}
 }
 
-// NewClock create [Time] from hour, minute and second, without nanosecond.
-// Time overflow will be wrapped around.
-func NewClock(hour, min, sec int) Time {
-	return NewTime(hour, min, sec, 0)
+// NewTimeChecked creates a [Time] from the hour, minute, second, and nanosecond,
+// returning an error if any component is outside the valid ranges defined by [ClampTime].
+func NewTimeChecked(hour, min, sec, nsec int) (Time, error) {
+	chour, cmin, csec, cnsec := ClampTime(hour, min, sec, nsec)
+	if chour != hour {
+		return Time{}, fmt.Errorf("date.NewTimeChecked: invalid hour %d (clamped into %d)", hour, chour)
+	}
+	if cmin != min {
+		return Time{}, fmt.Errorf("date.NewTimeChecked: invalid minute %d (clamped into %d)", min, cmin)
+	}
+	if csec != sec {
+		return Time{}, fmt.Errorf("date.NewTimeChecked: invalid second %d (clamped into %d)", sec, csec)
+	}
+	if cnsec != nsec {
+		return Time{}, fmt.Errorf("date.NewTimeChecked: invalid nanosecond %d (clamped into %d)", nsec, cnsec)
+	}
+	return NewTime(hour, min, sec, nsec), nil
 }
 
-// TimeOf create [Time] from [time.Time].
-// Time overflow will be wrapped around.
+// TimeOf creates a [Time] from [time.Time].
 func TimeOf(t time.Time) Time {
 	if t.IsZero() {
 		return Time{}
@@ -72,13 +75,10 @@ func TimeOf(t time.Time) Time {
 	return NewTime(t.Hour(), t.Minute(), t.Second(), t.Nanosecond())
 }
 
-// ClockOf create [Time] from [time.Time], without nanosecond.
-// Time overflow will be wrapped around.
-func ClockOf(t time.Time) Time {
-	if t.IsZero() {
-		return Time{}
-	}
-	return NewTime(t.Hour(), t.Minute(), t.Second(), 0)
+// NewClock creates a [Time] from the hour, minute, second, without a nanosecond argument,
+// clamping invalid values to the valid ranges defined by [ClampTime].
+func NewClock(hour, min, sec int) Time {
+	return NewTime(hour, min, sec, 0)
 }
 
 // ParseTime parses a string and returns the time value it represents.
@@ -102,7 +102,7 @@ func (clock Time) Sub(other Time) time.Duration {
 }
 
 // Add returns the [Time] after adding the duration d.
-// The calculation is floored to day.
+// The result wraps around the 24-hour clock.
 // See [time.Time.Add].
 func (clock Time) Add(dur time.Duration) Time {
 	t := clock.t.Add(dur)
