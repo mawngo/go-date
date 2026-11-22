@@ -109,8 +109,7 @@ func ParseDate(s string) (Date, error) {
 	// Not very effective, but people should use the [time.DateOnly] instead.
 	// The following block is from the [ParseDateTime] method.
 	// We copied it to here so this file can be standalone, copy to anywhere without modification.
-	t, err2 := time.Parse(DateTimeNano, s)
-	if err2 == nil {
+	if t, err := time.Parse(DateTimeNano, s); err == nil {
 		return DateOf(t), nil
 	}
 	if len(s) > 10 && (s[10] == 'T' || s[10] == 't') {
@@ -144,6 +143,44 @@ func (date Date) DaysSince(other Date) (days int) {
 	// Unix time increases by exactly 86400 seconds per day.
 	deltaUnix := date.t.Unix() - other.t.Unix()
 	return int(deltaUnix / 86400)
+}
+
+// AddMonths add months to date.
+func (date Date) AddMonths(months int) Date {
+	return date.AddDate(0, months, 0)
+}
+
+// AtWeekday returns the date that falls on the given weekday, found by
+// first shifting date by offsetDays and then moving to the nearest matching
+// weekday in the direction of the shift.
+//
+// If offsetDays is negative, the result is the closest occurrence of weekday
+// on or before the shifted date. If offsetDays is zero or positive, the
+// result is the closest occurrence of weekday on or after the shifted date.
+//
+// If the shifted date already falls on weekday, it is returned unchanged.
+//
+// For example, given a Wednesday:
+//
+//	d.AtWeekday(time.Friday, 1)    // the coming Friday (same day not included)
+//	d.AtWeekday(time.Monday, -1)   // the previous Monday (same day not included)
+//	d.AtWeekday(time.Wednesday, 0) // the same day
+//	d.AtWeekday(time.Wednesday, 1) // the next Wednesday (same day not included)
+//	d.AtWeekday(time.Wednesday, 7) // still the next Wednesday
+//	d.AtWeekday(time.Wednesday, 8) // Wednesday two weeks later
+func (date Date) AtWeekday(weekday time.Weekday, offsetDays int) Date {
+	return DateOf(atWeekDay(date.t, weekday, offsetDays))
+}
+
+func atWeekDay(t time.Time, weekday time.Weekday, offsetDays int) time.Time {
+	t = t.AddDate(0, 0, offsetDays)
+	days := 0
+	if offsetDays < 0 {
+		days = -((int(t.Weekday()) - int(weekday) + 7) % 7)
+	} else {
+		days = (int(weekday-t.Weekday()) + 7) % 7
+	}
+	return t.AddDate(0, 0, days)
 }
 
 // Sub returns the duration between [Date] and the other [Date].

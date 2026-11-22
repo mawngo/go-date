@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	d := date.DateOf(time.Now())
+	d := date.NewDate(2026, 11, 14)
 	d.AddDays(1)
 
 	fmt.Println(d) // 2026-11-14
@@ -15,6 +15,18 @@ func main() {
 	fmt.Println(d.UTC()) // 2026-11-14 00:00:00 +0000 UTC
 	// Convert to time.Time, at the start of the day in local time.
 	fmt.Println(d.Local()) // 2026-11-14 00:00:00 +0700 +07
+
+	// Now
+	fmt.Println(date.DateOf(time.Now())) // 2026-11-23
+	// Next Monday
+	fmt.Println(d.AtWeekday(time.Monday, 1)) // 2026-11-16
+	// Prev Monday
+	fmt.Println(d.AtWeekday(time.Monday, -1)) // 2026-11-09
+	// Prev Saturday
+	fmt.Println(d.AtWeekday(time.Saturday, -1)) // 2026-11-07
+	// 2 week ago Saturday
+	// d is Saturday, so if we -7, it falls right on the previous Saturday => we need to -8
+	fmt.Println(d.AtWeekday(time.Saturday, -8)) // 2026-11-31
 
 	// Convert to date.DateTime
 	dt := d.AtClockNano(12, 0, 0, 0)

@@ -10,8 +10,10 @@ import (
 // localDate is a generic interface that defines common methods for date types.
 type localDate[T any] interface {
 	binding[T]
+
 	AddDate(years int, months int, days int) T
 	AddDays(days int) T
+	AddMonths(months int) T
 	DaysSince(other T) int
 	Sub(other T) time.Duration
 	Add(d time.Duration) T
@@ -28,6 +30,7 @@ type localDate[T any] interface {
 	AtClockNano(hour, minute, second, nsec int) DateTime
 	AtClock(hour, minute, second int) DateTime
 	AtStartOfDay() DateTime
+	AtWeekday(weekday time.Weekday, offsetDays int) T
 
 	In(loc *time.Location) time.Time
 	UTC() time.Time
@@ -249,6 +252,33 @@ func (dt DateTime) DaysSince(other DateTime) int {
 	// Unix time increases by exactly 86400 seconds per day.
 	deltaUnix := dt.AtStartOfDay().t.Unix() - other.AtStartOfDay().t.Unix()
 	return int(deltaUnix / 86400)
+}
+
+// AddMonths add months to date.
+func (dt DateTime) AddMonths(months int) DateTime {
+	return dt.AddDate(0, months, 0)
+}
+
+// AtWeekday returns the date that falls on the given weekday, found by
+// first shifting date by offsetDays and then moving to the nearest matching
+// weekday in the direction of the shift.
+//
+// If offsetDays is negative, the result is the closest occurrence of weekday
+// on or before the shifted date. If offsetDays is zero or positive, the
+// result is the closest occurrence of weekday on or after the shifted date.
+//
+// If the shifted date already falls on weekday, it is returned unchanged.
+//
+// For example, given a Wednesday:
+//
+//	d.AtWeekday(time.Friday, 1)    // the coming Friday (same day not included)
+//	d.AtWeekday(time.Monday, -1)   // the previous Monday (same day not included)
+//	d.AtWeekday(time.Wednesday, 0) // the same day
+//	d.AtWeekday(time.Wednesday, 1) // the next Wednesday (same day not included)
+//	d.AtWeekday(time.Wednesday, 7) // still the next Wednesday
+//	d.AtWeekday(time.Wednesday, 8) // Wednesday two weeks later
+func (dt DateTime) AtWeekday(weekday time.Weekday, offsetDays int) DateTime {
+	return DateTimeOf(atWeekDay(dt.t, weekday, offsetDays))
 }
 
 // IsZero reports whether [DateTime] represents the zero instant.

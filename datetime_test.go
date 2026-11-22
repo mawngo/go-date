@@ -35,7 +35,6 @@ func TestDateTime(t *testing.T) {
 				}
 			}
 		})
-
 	})
 
 	t.Run("Test DateTime Operations", func(t *testing.T) {
@@ -87,6 +86,39 @@ func TestDateTime(t *testing.T) {
 		if date := NewDateTime(2025, 1, 1, 12, 1, 12, 12).In(tz); !date.Equal(time.Date(2025, 1, 1, 12, 1, 12, 12, tz)) {
 			t.Fatalf("In produce wrong Date")
 		}
+
+		t.Run("AtWeekday", func(t *testing.T) {
+			base := NewDateTime(2026, 11, 14, 12, 30, 45, 123_456_789) // Saturday
+			tests := []struct {
+				name       string
+				base       DateTime
+				weekday    time.Weekday
+				offsetDays int
+				want       DateTime
+			}{
+				{"same day", base, time.Saturday, 0, NewDateTime(2026, 11, 14, 12, 30, 45, 123_456_789)},
+				{"next occurrence", base, time.Saturday, 1, NewDateTime(2026, 11, 21, 12, 30, 45, 123_456_789)},
+				{"previous occurrence", base, time.Saturday, -1, NewDateTime(2026, 11, 7, 12, 30, 45, 123_456_789)},
+				{"one week forward", base, time.Saturday, 7, NewDateTime(2026, 11, 21, 12, 30, 45, 123_456_789)},
+				{"one week backward", base, time.Saturday, -7, NewDateTime(2026, 11, 7, 12, 30, 45, 123_456_789)},
+				{"offset past occurrence", base, time.Saturday, -8, NewDateTime(2026, 10, 31, 12, 30, 45, 123_456_789)},
+				{"coming Monday", base, time.Monday, 0, NewDateTime(2026, 11, 16, 12, 30, 45, 123_456_789)},
+				{"next Monday", base, time.Monday, 1, NewDateTime(2026, 11, 16, 12, 30, 45, 123_456_789)},
+				{"previous Monday", base, time.Monday, -1, NewDateTime(2026, 11, 9, 12, 30, 45, 123_456_789)},
+				{"coming Friday", base, time.Friday, 0, NewDateTime(2026, 11, 20, 12, 30, 45, 123_456_789)},
+				{"previous Friday", base, time.Friday, -1, NewDateTime(2026, 11, 13, 12, 30, 45, 123_456_789)},
+				{"cross month boundary", NewDateTime(2026, 11, 2, 8, 0, 0, 0), time.Friday, -1, NewDateTime(2026, 10, 30, 8, 0, 0, 0)},
+				{"cross year boundary", NewDateTime(2026, 1, 1, 23, 59, 59, 999_999_999), time.Wednesday, -1, NewDateTime(2025, 12, 31, 23, 59, 59, 999_999_999)},
+			}
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					if got := tt.base.AtWeekday(tt.weekday, tt.offsetDays); !got.Equal(tt.want) {
+						t.Fatalf("AtWeekday(%v, %d): expected %v, got %v", tt.weekday, tt.offsetDays, tt.want, got)
+					}
+				})
+			}
+		})
+
 	})
 
 	t.Run("Test Clamping", func(t *testing.T) {

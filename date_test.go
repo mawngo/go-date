@@ -408,6 +408,9 @@ func TestDate(t *testing.T) {
 		if addDays := now.AddDays(1); !addDays.Equal(nextDay) {
 			t.Fatalf("AddDays failed")
 		}
+		if addDays := now.AddMonths(1); !addDays.Equal(NewDate(2023, 11, 15)) {
+			t.Fatalf("AddDays failed")
+		}
 		if addDate := now.AddDate(0, 0, 1); !addDate.Equal(nextDay) {
 			t.Fatalf("AddDate failed")
 		}
@@ -439,6 +442,38 @@ func TestDate(t *testing.T) {
 		if date := NewDate(2025, 1, 1).In(tz); !date.Equal(time.Date(2025, 1, 1, 0, 0, 0, 0, tz)) {
 			t.Fatalf("In produce wrong Date")
 		}
+
+		t.Run("AtWeekday", func(t *testing.T) {
+			base := NewDate(2026, 11, 14) // Saturday
+			tests := []struct {
+				name       string
+				base       Date
+				weekday    time.Weekday
+				offsetDays int
+				want       Date
+			}{
+				{"same day", base, time.Saturday, 0, NewDate(2026, 11, 14)},
+				{"next occurrence", base, time.Saturday, 1, NewDate(2026, 11, 21)},
+				{"previous occurrence", base, time.Saturday, -1, NewDate(2026, 11, 7)},
+				{"one week forward", base, time.Saturday, 7, NewDate(2026, 11, 21)},
+				{"one week backward", base, time.Saturday, -7, NewDate(2026, 11, 7)},
+				{"offset past occurrence", base, time.Saturday, -8, NewDate(2026, 10, 31)},
+				{"coming Monday", base, time.Monday, 0, NewDate(2026, 11, 16)},
+				{"next Monday", base, time.Monday, 1, NewDate(2026, 11, 16)},
+				{"previous Monday", base, time.Monday, -1, NewDate(2026, 11, 9)},
+				{"coming Friday", base, time.Friday, 0, NewDate(2026, 11, 20)},
+				{"previous Friday", base, time.Friday, -1, NewDate(2026, 11, 13)},
+				{"cross month boundary", NewDate(2026, 11, 2), time.Friday, -1, NewDate(2026, 10, 30)},
+				{"cross year boundary", NewDate(2026, 1, 1), time.Wednesday, -1, NewDate(2025, 12, 31)},
+			}
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					if got := tt.base.AtWeekday(tt.weekday, tt.offsetDays); !got.Equal(tt.want) {
+						t.Fatalf("AtWeekday(%v, %d): expected %v, got %v", tt.weekday, tt.offsetDays, tt.want, got)
+					}
+				})
+			}
+		})
 	})
 
 	t.Run("Test Clamping", func(t *testing.T) {
