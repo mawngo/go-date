@@ -28,9 +28,6 @@ type binding[T any] interface {
 	sql.Scanner
 	UnmarshalParam(string) error
 
-	// Deprecated: not every one use GORM. GORM users can use `gorm:"type:..."` instead.
-	GormDataType() string
-
 	String() string
 	Format(layout string) string
 	AppendFormat(b []byte, layout string) []byte
@@ -362,9 +359,4 @@ func (date Date) MarshalText() ([]byte, error) {
 		return nil, nil
 	}
 	return []byte(date.t.Format(time.DateOnly)), nil
-}
-
-// Deprecated: use `gorm:"type:date"` instead.
-func (date Date) GormDataType() string {
-	return "date"
 }
