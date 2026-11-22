@@ -317,6 +317,7 @@ func (clock *Time) Scan(value any) error {
 	return nil
 }
 
+// Deprecated: use `gorm:"type:time"` instead.
 func (clock Time) GormDataType() string {
 	return "time"
 }

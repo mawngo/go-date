@@ -430,6 +430,7 @@ func (dt *DateTime) UnmarshalParam(param string) error {
 	return nil
 }
 
+// Deprecated: use `gorm:"type:datetime"` instead.
 func (dt DateTime) GormDataType() string {
 	return "datetime"
 }
