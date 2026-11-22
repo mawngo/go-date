@@ -98,11 +98,6 @@ func DateOf(t time.Time) Date {
 	return NewDate(t.Date())
 }
 
-// DateNow create [Date] from [time.Now].
-func DateNow() Date {
-	return DateOf(time.Now())
-}
-
 // ParseDate parses a string in full-date format and returns the date value it represents.
 // Support [time.DateOnly] and [DateTimeNano] formats, [time.RFC3339Nano] as a fallback format.
 func ParseDate(s string) (Date, error) {

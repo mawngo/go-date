@@ -124,11 +124,6 @@ func DateTimeOf(t time.Time) DateTime {
 	return NewDateTime(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond())
 }
 
-// DateTimeNow create [DateTime] from [time.Now].
-func DateTimeNow() DateTime {
-	return DateTimeOf(time.Now())
-}
-
 // ParseDateTime parses a string and returns the DateTime it represents.
 // Support [DateTimeNano] format, [time.RFC3339Nano] as a fallback format.
 func ParseDateTime(s string) (DateTime, error) {
