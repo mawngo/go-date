@@ -42,4 +42,11 @@ func main() {
 	fmt.Println(dt.AtClockNano(t.ClockNano())) // 2026-11-14 23:59:59.001234
 	// Or with second precision only
 	fmt.Println(dt.AtClock(t.Clock())) // 2026-11-14 23:59:59
+
+	// Only year and month.
+	ym := date.NewYearMonth(2026, 11)
+	fmt.Println(ym)              // 2026-11
+	fmt.Println(ym.AddMonths(1)) // 2026-12
+	// To date
+	fmt.Println(ym.AtStartOfMonth()) // 2026-11-01
 }

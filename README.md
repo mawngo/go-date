@@ -10,9 +10,10 @@ Require go 1.27+
 go get -u github.com/mawngo/go-date/v2
 ```
 
-Alternately, you can just copy the `date.go`, `datetime.go` and `time.go` file into your project.
+Alternatively, you can just copy the `date.go`, `datetime.go`, `time.go`, and `partial.go` files into your project.
 
-The `datetime.go` and `time.go` file is optional, you can remove both, or keep `datetime.go`, depending on your need.
+The `datetime.go`, `time.go`, and `partial.go` files are optional; you can keep only the ones that you need.
+`datetime.go` and `partial.go` depend on `date.go`, while `time.go` depends on `datetime.go`.
 
 ## Usage
 
@@ -39,15 +40,18 @@ func main() {
 	// Then convert to time.Time
 	fmt.Println(dt.Local()) // 2026-11-14 12:00:00 +0700 +07
 
-	// 24h time only
+	// 24h time only - out-of-range components are clamped into range.
 	t := date.NewTime(25, 70, 70, 1234000)
-	fmt.Println(t) // 02:11:10.001234
+	fmt.Println(t) // 23:59:59.001234
+	// Amounts of time wrap around instead of clamping:
+	fmt.Println(date.TimeFrom(25 * time.Hour)) // 01:00:00
 	// Change time
-	fmt.Println(dt.AtTime(t.Time())) // 2026-11-14 02:11:10.001234
+	fmt.Println(dt.AtTime(t.Time())) // 2026-11-14 23:59:59.001234
 	// Or with second precision only
-	fmt.Println(dt.AtClock(t.Clock())) // 2026-11-14 02:11:10
+	fmt.Println(dt.AtClock(t.Clock())) // 2026-11-14 23:59:59
 }
 
 ```
 
-When unmarshalling JSON and text, `Date` and `DateTime` types support both their standard format and RFC3339Nano.
+When unmarshalling JSON and text, the `Date` and `DateTime` types support both their respective standard formats and
+RFC3339Nano.
