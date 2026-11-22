@@ -25,7 +25,7 @@ type localDate[T any] interface {
 	ISOWeek() (year, week int)
 	YearDay() int
 
-	AtTime(hour, minute, second, nsec int) DateTime
+	AtClockNano(hour, minute, second, nsec int) DateTime
 	AtClock(hour, minute, second int) DateTime
 	AtStartOfDay() DateTime
 
@@ -37,19 +37,19 @@ type localDate[T any] interface {
 var _ localDate[Date] = (*Date)(nil)
 var _ localDate[DateTime] = (*DateTime)(nil)
 
-// AtTime returns a new [DateTime] with the same date as date but with the given time.
-// Time overflow can change the date.
-func (date Date) AtTime(hour, minute, sec, nsec int) DateTime {
+// AtClockNano returns a new [DateTime] with the same date as the [Date] value at the given time,
+// clamping the time components to the valid ranges defined by [ClampTime].
+func (date Date) AtClockNano(hour, minute, sec, nsec int) DateTime {
 	return NewDateTime(date.t.Year(), date.t.Month(), date.t.Day(), hour, minute, sec, nsec)
 }
 
-// AtClock returns a new [DateTime] with the same date as date but with the given time without nanosecond.
-// Time overflow can change the date.
+// AtClock returns a new [DateTime] with the same date as the [Date] value at the given time,
+// without a nanosecond argument, clamping the time components to the valid ranges defined by [ClampTime].
 func (date Date) AtClock(hour, minute, sec int) DateTime {
 	return NewDateTime(date.t.Year(), date.t.Month(), date.t.Day(), hour, minute, sec, 0)
 }
 
-// AtStartOfDay returns [DateTime] at the start of the day.
+// AtStartOfDay returns a new [DateTime] at the start of the day.
 func (date Date) AtStartOfDay() DateTime {
 	return NewDateTime(date.t.Year(), date.t.Month(), date.t.Day(), 0, 0, 0, 0)
 }
@@ -217,7 +217,14 @@ func (dt DateTime) Clock() (hour, minute, second int) {
 	return dt.t.Clock()
 }
 
-// AtDate returns a [DateTime] with the same time and the given date.
+// ClockNano returns the time components of clock as hour, minute, second, and nanosecond.
+func (dt DateTime) ClockNano() (hour, minute, second, nsec int) {
+	hour, minute, second = dt.t.Clock()
+	return hour, minute, second, dt.Nanosecond()
+}
+
+// AtDate returns a new [DateTime] with the same time as the [DateTime] value at the given date,
+// clamping the date components to the valid ranges defined by [ClampDate].
 func (dt DateTime) AtDate(year int, month time.Month, day int) DateTime {
 	return NewDateTime(year, month, day, dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond())
 }
@@ -294,14 +301,14 @@ func (dt DateTime) YearDay() int {
 	return dt.t.YearDay()
 }
 
-// AtTime returns a new [DateTime] with the same date as date but with the given time.
-// Time overflow can change the date.
-func (dt DateTime) AtTime(hour, minute, second, nsec int) DateTime {
+// AtClockNano returns a new [DateTime] with the same date as the [DateTime] value at the given time,
+// clamping the time components to the valid ranges defined by [ClampTime].
+func (dt DateTime) AtClockNano(hour, minute, second, nsec int) DateTime {
 	return NewDateTime(dt.Year(), dt.Month(), dt.Day(), hour, minute, second, nsec)
 }
 
-// AtClock returns a new [DateTime] with the same date as date but with the given time without nanosecond.
-// Time overflow can change the date.
+// AtClock returns a new [DateTime] with the same date as the [DateTime] value at the given time,
+// without a nanosecond argument, clamping the time components to the valid ranges defined by [ClampTime].
 func (dt DateTime) AtClock(hour, minute, second int) DateTime {
 	return NewDateTime(dt.Year(), dt.Month(), dt.Day(), hour, minute, second, 0)
 }
@@ -311,6 +318,7 @@ func (dt DateTime) AtStartOfDay() DateTime {
 	return NewDateTime(dt.Year(), dt.Month(), dt.Day(), 0, 0, 0, 0)
 }
 
+// In returns [time.Time] in the given location.
 func (dt DateTime) In(loc *time.Location) time.Time {
 	return time.Date(dt.t.Year(), dt.t.Month(), dt.t.Day(), dt.t.Hour(), dt.t.Minute(), dt.t.Second(), dt.t.Nanosecond(), loc)
 }

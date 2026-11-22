@@ -61,19 +61,41 @@ func TestTime(t *testing.T) {
 	t.Run("Test Construct", func(t *testing.T) {
 		now := time.Now()
 		local := TimeOf(now)
-		if !local.Equal(NewTime(now.Hour(), now.Minute(), now.Second(), now.Nanosecond())) {
+		if !local.Equal(NewTimeNano(now.Hour(), now.Minute(), now.Second(), now.Nanosecond())) {
 			t.Fatalf("Expected constructed time give different result")
 		}
 
-		if NewClock(0, 0, 0).IsZero() {
+		if NewTime(0, 0, 0).IsZero() {
 			t.Fatalf("Expected midnight not to be zero")
 		}
-		if NewTime(0, 0, 0, 0).IsZero() {
+		if NewTimeNano(0, 0, 0, 0).IsZero() {
 			t.Fatalf("Expected midnight not to be zero")
+		}
+		if !NewTimeNano(12, 15, 11, 0).Equal(NewTime(12, 15, 11)) {
+			t.Fatalf("Expected constructed time give same result")
 		}
 
+		t.Run("Checked", func(t *testing.T) {
+			if v, err := NewTimeNanoChecked(23, 59, 59, 999_999_999); err != nil || !v.Equal(NewTimeNano(23, 59, 59, 999_999_999)) {
+				t.Fatalf("NewTimeNanoChecked valid: got %v, %v", v, err)
+			}
+			if v, err := NewTimeNanoChecked(12, 30, 45, 0); err != nil || !v.Equal(NewTime(12, 30, 45)) {
+				t.Fatalf("NewTimeNanoChecked valid: got %v, %v", v, err)
+			}
+			for _, in := range [][4]int{
+				{24, 0, 0, 0},
+				{0, 60, 0, 0},
+				{0, 0, 60, 0},
+				{0, 0, 0, 1_000_000_000},
+			} {
+				if _, err := NewTimeNanoChecked(in[0], in[1], in[2], in[3]); err == nil {
+					t.Fatalf("NewTimeNanoChecked(%v): expected error, got nil", in)
+				}
+			}
+		})
+
 		func() {
-			b, err := NewClock(0, 0, 0).MarshalJSON()
+			b, err := NewTime(0, 0, 0).MarshalJSON()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -88,17 +110,17 @@ func TestTime(t *testing.T) {
 	})
 
 	t.Run("Test Time Operations", func(t *testing.T) {
-		now := NewClock(23, 10, 15)
-		before := NewClock(19, 0, 0)
-		after := NewClock(23, 15, 0)
+		now := NewTime(23, 10, 15)
+		before := NewTime(19, 0, 0)
+		after := NewTime(23, 15, 0)
 
-		if !now.Equal(NewTime(23, 10, 15, 0)) || now.Equal(NewTime(23, 10, 15, 1)) {
+		if !now.Equal(NewTimeNano(23, 10, 15, 0)) || now.Equal(NewTimeNano(23, 10, 15, 1)) {
 			t.Fatalf("Equally failed")
 		}
-		if sub := now.Sub(NewTime(19, 0, 15, 0)); sub != (4*time.Hour + 10*time.Minute) {
-			t.Fatalf("Sub failed: expected 4 hours, got %v", now.Sub(NewTime(4, 0, 15, 0)))
+		if sub := now.Sub(NewTimeNano(19, 0, 15, 0)); sub != (4*time.Hour + 10*time.Minute) {
+			t.Fatalf("Sub failed: expected 4 hours, got %v", now.Sub(NewTimeNano(4, 0, 15, 0)))
 		}
-		if add := now.Add(10 * time.Minute); !add.Equal(NewTime(23, 20, 15, 0)) {
+		if add := now.Add(10 * time.Minute); !add.Equal(NewTimeNano(23, 20, 15, 0)) {
 			t.Fatalf("Add failed")
 		}
 		if !now.After(before) || now.After(after) || now.After(now) {
@@ -115,7 +137,7 @@ func TestTime(t *testing.T) {
 		func() {
 			now := time.Now()
 			local := TimeOf(now)
-			h, m, s, nano := local.Time()
+			h, m, s, nano := local.ClockNano()
 			h2, m2, s2 := now.Clock()
 			nano2 := now.Nanosecond()
 			if h != h2 || m != m2 || s != s2 || nano != nano2 {
@@ -123,30 +145,17 @@ func TestTime(t *testing.T) {
 			}
 		}()
 
-		if dt := now.AtDate(2023, 1, 1); !dt.Equal(DateTimeFrom(NewDate(2023, 1, 1), now)) {
+		if dt := now.AtDate(2023, 1, 1); !dt.Equal(NewDateTime(2023, 1, 1, now.Hour(), now.Minute(), now.Second(), now.Nanosecond())) {
 			t.Fatalf("AtDate produce wrong DateTime")
 		}
 	})
 
-	t.Run("Test 24h Wrapping", func(t *testing.T) {
-		local := NewClock(25, 70, 70)
-		if local.Second() != 10 {
-			t.Fatalf("Second wrap mismatch: %d", local.Second())
+	t.Run("Test Clamping", func(t *testing.T) {
+		if local := NewTime(25, 70, 70); !local.Equal(NewTime(23, 59, 59)) {
+			t.Fatalf("Clamp mismatch: expected 23:59:59, got %v", local)
 		}
-		if local.Minute() != 11 {
-			t.Fatalf("Minute wrap mismatch: %d", local.Minute())
-		}
-		if local.Hour() != 2 {
-			t.Fatalf("Hour wrap mismatch: %d", local.Hour())
-		}
-		if !local.Equal(NewClock(2, 11, 10)) {
-			t.Fatalf("Equal wrap mismatch - wrapping in constructor is not properly handled")
-		}
-		if local.Add(23*time.Hour) != NewClock(1, 11, 10) {
-			t.Fatalf("Add wrap mismatch")
-		}
-		if local.Add(-23*time.Hour) != NewClock(3, 11, 10) {
-			t.Fatalf("Add wrap mismatch")
+		if local := NewTimeNano(-1, -1, -1, -1); !local.Equal(NewTimeNano(0, 0, 0, 0)) {
+			t.Fatalf("Clamp mismatch: expected 00:00:00, got %v", local)
 		}
 	})
 
@@ -156,9 +165,9 @@ func TestTime(t *testing.T) {
 			in   string
 			want Time
 		}{
-			{"no fraction", "12:10:15", NewClock(12, 10, 15)},
-			{"with fraction", "12:10:15.123456789", NewTime(12, 10, 15, 123_456_789)},
-			{"midnight", "00:00:00", NewClock(0, 0, 0)},
+			{"no fraction", "12:10:15", NewTime(12, 10, 15)},
+			{"with fraction", "12:10:15.123456789", NewTimeNano(12, 10, 15, 123_456_789)},
+			{"midnight", "00:00:00", NewTime(0, 0, 0)},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {

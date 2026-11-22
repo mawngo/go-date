@@ -22,6 +22,7 @@ type localTime[T any] interface {
 	Nanosecond() int
 
 	Clock() (hour, minute, second int)
+	ClockNano() (hour, minute, second, nsec int)
 	AtDate(year int, month time.Month, day int) DateTime
 }
 
@@ -39,46 +40,47 @@ type Time struct {
 	t time.Time
 }
 
-// NewTime creates a [Time] from the hour, minute, second, and nanosecond,
+// NewTimeNano creates a [Time] from the hour, minute, second, and nanosecond,
 // clamping invalid values to the valid ranges defined by [ClampTime].
-func NewTime(hour, min, sec, nsec int) Time {
+func NewTimeNano(hour, min, sec, nsec int) Time {
 	hour, min, sec, nsec = ClampTime(hour, min, sec, nsec)
 	return Time{
 		t: time.Date(1970, time.January, 1, hour, min, sec, nsec, time.UTC),
 	}
 }
 
-// NewTimeChecked creates a [Time] from the hour, minute, second, and nanosecond,
+// NewTimeNanoChecked creates a [Time] from the hour, minute, second, and nanosecond,
 // returning an error if any component is outside the valid ranges defined by [ClampTime].
-func NewTimeChecked(hour, min, sec, nsec int) (Time, error) {
+func NewTimeNanoChecked(hour, min, sec, nsec int) (Time, error) {
 	chour, cmin, csec, cnsec := ClampTime(hour, min, sec, nsec)
 	if chour != hour {
-		return Time{}, fmt.Errorf("date.NewTimeChecked: invalid hour %d (clamped into %d)", hour, chour)
+		return Time{}, fmt.Errorf("date.NewTimeNanoChecked: invalid hour %d (clamped into %d)", hour, chour)
 	}
 	if cmin != min {
-		return Time{}, fmt.Errorf("date.NewTimeChecked: invalid minute %d (clamped into %d)", min, cmin)
+		return Time{}, fmt.Errorf("date.NewTimeNanoChecked: invalid minute %d (clamped into %d)", min, cmin)
 	}
 	if csec != sec {
-		return Time{}, fmt.Errorf("date.NewTimeChecked: invalid second %d (clamped into %d)", sec, csec)
+		return Time{}, fmt.Errorf("date.NewTimeNanoChecked: invalid second %d (clamped into %d)", sec, csec)
 	}
 	if cnsec != nsec {
-		return Time{}, fmt.Errorf("date.NewTimeChecked: invalid nanosecond %d (clamped into %d)", nsec, cnsec)
+		return Time{}, fmt.Errorf("date.NewTimeNanoChecked: invalid nanosecond %d (clamped into %d)", nsec, cnsec)
 	}
-	return NewTime(hour, min, sec, nsec), nil
+	return NewTimeNano(hour, min, sec, nsec), nil
 }
 
 // TimeOf creates a [Time] from [time.Time].
+// Extract the time-of-day portion of t, including nanoseconds.
 func TimeOf(t time.Time) Time {
 	if t.IsZero() {
 		return Time{}
 	}
-	return NewTime(t.Hour(), t.Minute(), t.Second(), t.Nanosecond())
+	return NewTimeNano(t.Hour(), t.Minute(), t.Second(), t.Nanosecond())
 }
 
-// NewClock creates a [Time] from the hour, minute, second, without a nanosecond argument,
+// NewTime creates a [Time] from the hour, minute, second, without a nanosecond argument,
 // clamping invalid values to the valid ranges defined by [ClampTime].
-func NewClock(hour, min, sec int) Time {
-	return NewTime(hour, min, sec, 0)
+func NewTime(hour, min, sec int) Time {
+	return NewTimeNano(hour, min, sec, 0)
 }
 
 // ParseTime parses a string and returns the time value it represents.
@@ -106,7 +108,7 @@ func (clock Time) Sub(other Time) time.Duration {
 // See [time.Time.Add].
 func (clock Time) Add(dur time.Duration) Time {
 	t := clock.t.Add(dur)
-	return NewTime(t.Hour(), t.Minute(), t.Second(), t.Nanosecond())
+	return NewTimeNano(t.Hour(), t.Minute(), t.Second(), t.Nanosecond())
 }
 
 // IsZero reports whether [Time] represents the zero IsZero instants.
@@ -160,13 +162,14 @@ func (clock Time) Clock() (hour, minute, second int) {
 	return clock.t.Clock()
 }
 
-// Time returns the time components of clock as hour, minute, second, and nanosecond.
-func (clock Time) Time() (hour, minute, second, nsec int) {
+// ClockNano returns the time components of clock as hour, minute, second, and nanosecond.
+func (clock Time) ClockNano() (hour, minute, second, nsec int) {
 	hour, minute, second = clock.t.Clock()
 	return hour, minute, second, clock.Nanosecond()
 }
 
-// AtDate returns a [DateTime] with the same time and the given date.
+// AtDate returns a new [DateTime] with the same time as the [Time] value at the given date,
+// clamping the date components to the valid ranges defined by [ClampDate].
 func (clock Time) AtDate(year int, month time.Month, day int) DateTime {
 	return NewDateTime(year, month, day, clock.Hour(), clock.Minute(), clock.Second(), clock.Nanosecond())
 }

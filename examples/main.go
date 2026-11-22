@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/mawngo/go-date/v2"
+	"time"
 )
 
 func main() {
-	d := date.DateNow()
+	d := date.DateOf(time.Now())
 	d.AddDays(1)
 
 	fmt.Println(d) // 2026-11-14
@@ -16,16 +17,17 @@ func main() {
 	fmt.Println(d.Local()) // 2026-11-14 00:00:00 +0700 +07
 
 	// Convert to date.DateTime
-	dt := d.AtTime(12, 0, 0, 0)
+	dt := d.AtClockNano(12, 0, 0, 0)
 	fmt.Println(dt) // 2026-11-14 12:00:00
 	// Then convert to time.Time
 	fmt.Println(dt.Local()) // 2026-11-14 12:00:00 +0700 +07
 
-	// 24h time only
-	t := date.NewTime(25, 70, 70, 1234000)
-	fmt.Println(t) // 02:11:10.001234
+	// 24h time only - out-of-range components are clamped into range.
+	t := date.NewTimeNano(25, 70, 70, 1234000)
+	fmt.Println(t)                      // 23:59:59.001234
+	fmt.Println(t.Format(time.Kitchen)) // 11:59PM
 	// Change time
-	fmt.Println(dt.AtTime(t.Time())) // 2026-11-14 02:11:10.001234
+	fmt.Println(dt.AtClockNano(t.ClockNano())) // 2026-11-14 23:59:59.001234
 	// Or with second precision only
-	fmt.Println(dt.AtClock(t.Clock())) // 2026-11-14 02:11:10
+	fmt.Println(dt.AtClock(t.Clock())) // 2026-11-14 23:59:59
 }

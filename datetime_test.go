@@ -16,6 +16,26 @@ func TestDateTime(t *testing.T) {
 		if !local.Equal(NewDateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), now.Nanosecond())) {
 			t.Fatalf("Expected constructed time give different result")
 		}
+		t.Run("Checked", func(t *testing.T) {
+			if v, err := NewDateTimeChecked(2020, 2, 29, 23, 59, 59, 0); err != nil || !v.Equal(NewDateTime(2020, 2, 29, 23, 59, 59, 0)) {
+				t.Fatalf("NewDateTimeChecked valid: got %v, %v", v, err)
+			}
+			for _, in := range []struct {
+				y, mo, d, h, mi, s, ns int
+			}{
+				{2020, 13, 1, 0, 0, 0, 0},
+				{2019, 2, 29, 0, 0, 0, 0},
+				{2020, 1, 1, 24, 0, 0, 0},
+				{2020, 1, 1, 0, 60, 0, 0},
+				{2020, 1, 1, 0, 0, 60, 0},
+				{2020, 1, 1, 0, 0, 0, 1_000_000_000},
+			} {
+				if _, err := NewDateTimeChecked(in.y, time.Month(in.mo), in.d, in.h, in.mi, in.s, in.ns); err == nil {
+					t.Fatalf("NewDateTimeChecked(%v): expected error, got nil", in)
+				}
+			}
+		})
+
 	})
 
 	t.Run("Test DateTime Operations", func(t *testing.T) {
@@ -55,16 +75,16 @@ func TestDateTime(t *testing.T) {
 			t.Fatalf("Compare failed")
 		}
 
-		if dt := now.AtDate(2023, 1, 1); !dt.Equal(DateTimeFrom(NewDate(2023, 1, 1), NewClock(now.Clock()))) {
+		if dt := now.AtDate(2023, 1, 1); !dt.Equal(NewDateTime(2023, 1, 1, now.Hour(), now.Minute(), now.Second(), now.Nanosecond())) {
 			t.Fatalf("AtDate produce wrong DateTime")
 		}
-		if dt := now.AtClock(5, 15, 20); !dt.Equal(DateTimeFrom(NewDate(now.Date()), NewClock(5, 15, 20))) {
+		if dt := now.AtClock(5, 15, 20); !dt.Equal(NewDateTime(now.Year(), now.Month(), now.Day(), 5, 15, 20, 0)) {
 			t.Fatalf("AtClock produce wrong DateTime")
 		}
-		if dt := now.AtTime(5, 15, 20, 0); !dt.Equal(DateTimeFrom(NewDate(now.Date()), NewTime(5, 15, 20, 0))) {
-			t.Fatalf("AtTime produce wrong DateTime")
+		if dt := now.AtClockNano(5, 15, 20, 2); !dt.Equal(NewDateTime(now.Year(), now.Month(), now.Day(), 5, 15, 20, 2)) {
+			t.Fatalf("AtClockNano produce wrong DateTime")
 		}
-		if !now.AtStartOfDay().Equal(DateTimeFrom(NewDate(now.Date()), NewClock(0, 0, 0))) {
+		if !now.AtStartOfDay().Equal(NewDateTime(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0)) {
 			t.Fatalf("AtStartOfDay produce wrong DateTime")
 		}
 
@@ -84,34 +104,24 @@ func TestDateTime(t *testing.T) {
 		}
 	})
 
-	t.Run("Test 24h Wrapping", func(t *testing.T) {
-		local := NewDateTime(2025, 12, 31, 25, 70, 70, 0)
-		if local.Second() != 10 {
-			t.Fatalf("Second wrap mismatch: %d", local.Second())
+	t.Run("Test Clamping", func(t *testing.T) {
+		if local := NewDateTime(2025, 12, 31, 25, 70, 70, 0); !local.Equal(NewDateTime(2025, 12, 31, 23, 59, 59, 0)) {
+			t.Fatalf("Clamp mismatch: expected 2025-12-31 23:59:59, got %v", local)
 		}
-		if local.Minute() != 11 {
-			t.Fatalf("Minute wrap mismatch: %d", local.Minute())
+		if local := NewDate(2020, 2, 31); !local.Equal(NewDate(2020, 2, 29)) {
+			t.Fatalf("Clamp mismatch: expected 2020-02-29, got %v", local)
 		}
-		if local.Hour() != 2 {
-			t.Fatalf("Hour wrap mismatch: %d", local.Hour())
+		if local := NewDate(2020, 13, 40); !local.Equal(NewDate(2020, 12, 31)) {
+			t.Fatalf("Clamp mismatch: expected 2020-12-31, got %v", local)
 		}
-		if local.Year() != 2026 {
-			t.Fatalf("Year wrap mismatch: %d", local.Year())
+	})
+
+	t.Run("Test 12 months Wrapping", func(t *testing.T) {
+		if local := NewDateTime(2025, 12, 31, 23, 0, 0, 0).Add(2 * time.Hour); !local.Equal(NewDateTime(2026, 1, 1, 1, 0, 0, 0)) {
+			t.Fatalf("Add wrap mismatch: expected 2026-01-01 01:00:00, got %v", local)
 		}
-		if local.Month() != 1 {
-			t.Fatalf("Month wrap mismatch: %d", local.Month())
-		}
-		if local.Day() != 1 {
-			t.Fatalf("Day wrap mismatch: %d", local.Day())
-		}
-		if !local.Equal(NewDateTime(2026, 1, 1, 2, 11, 10, 0)) {
-			t.Fatalf("Equal wrap mismatch - wrapping in constructor is not properly handled")
-		}
-		if local.Add(23*time.Hour) != NewDateTime(2026, 1, 2, 1, 11, 10, 0) {
-			t.Fatalf("Add wrap mismatch")
-		}
-		if local.Add(-23*time.Hour) != NewDateTime(2025, 12, 31, 3, 11, 10, 0) {
-			t.Fatalf("Add wrap mismatch")
+		if local := NewDateTime(2025, 12, 31, 10, 0, 0, 0).AddDate(0, 1, 0); !local.Equal(NewDateTime(2026, 1, 31, 10, 0, 0, 0)) {
+			t.Fatalf("AddDate wrap mismatch: expected 2026-01-31 10:00:00, got %v", local)
 		}
 	})
 

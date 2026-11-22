@@ -353,6 +353,17 @@ func TestDate(t *testing.T) {
 		if !local.Equal(NewDate(now.Year(), now.Month(), now.Day())) {
 			t.Fatalf("Expected constructed date give different result")
 		}
+		t.Run("Checked", func(t *testing.T) {
+			if v, err := NewDateChecked(2020, 2, 29); err != nil || !v.Equal(NewDate(2020, 2, 29)) {
+				t.Fatalf("NewDateChecked valid: got %v, %v", v, err)
+			}
+			if _, err := NewDateChecked(2020, 13, 1); err == nil {
+				t.Fatalf("NewDateChecked(2020, 13, 1): expected error, got nil")
+			}
+			if _, err := NewDateChecked(2019, 2, 29); err == nil {
+				t.Fatalf("NewDateChecked(2019, 2, 29): expected error, got nil")
+			}
+		})
 	})
 
 	t.Run("Test Date Operations", func(t *testing.T) {
@@ -395,13 +406,13 @@ func TestDate(t *testing.T) {
 			t.Fatalf("Compare failed")
 		}
 
-		if dt := now.AtClock(5, 15, 20); !dt.Equal(DateTimeFrom(now, NewClock(5, 15, 20))) {
+		if dt := now.AtClock(5, 15, 20); !dt.Equal(NewDateTime(now.Year(), now.Month(), now.Day(), 5, 15, 20, 0)) {
 			t.Fatalf("AtClock produce wrong DateTime")
 		}
-		if dt := now.AtTime(5, 15, 20, 0); !dt.Equal(DateTimeFrom(now, NewTime(5, 15, 20, 0))) {
-			t.Fatalf("AtTime produce wrong DateTime")
+		if dt := now.AtClockNano(5, 15, 20, 2); !dt.Equal(NewDateTime(now.Year(), now.Month(), now.Day(), 5, 15, 20, 2)) {
+			t.Fatalf("AtClockNano produce wrong DateTime")
 		}
-		if !now.AtStartOfDay().Equal(DateTimeFrom(now, NewClock(0, 0, 0))) {
+		if !now.AtStartOfDay().Equal(NewDateTime(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0)) {
 			t.Fatalf("AtStartOfDay produce wrong DateTime")
 		}
 
@@ -418,6 +429,18 @@ func TestDate(t *testing.T) {
 		}
 		if date := NewDate(2025, 1, 1).In(tz); !date.Equal(time.Date(2025, 1, 1, 0, 0, 0, 0, tz)) {
 			t.Fatalf("In produce wrong Date")
+		}
+	})
+
+	t.Run("Test Clamping", func(t *testing.T) {
+		if local := NewDate(2020, 2, 31); !local.Equal(NewDate(2020, 2, 29)) {
+			t.Fatalf("Clamp mismatch: expected 2020-02-29, got %v", local)
+		}
+		if local := NewDate(2020, 13, 40); !local.Equal(NewDate(2020, 12, 31)) {
+			t.Fatalf("Clamp mismatch: expected 2020-12-31, got %v", local)
+		}
+		if local := NewDate(2020, 0, 0); !local.Equal(NewDate(2020, 1, 1)) {
+			t.Fatalf("Clamp mismatch: expected 2020-01-01, got %v", local)
 		}
 	})
 
