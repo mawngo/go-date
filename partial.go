@@ -372,12 +372,8 @@ func (md MonthDay) MonthDay() (month time.Month, day int) {
 //
 // If the resulting date is invalid (for example, February 29 in a non-leap year),
 // the clamped date is returned along with an error.
-func (md MonthDay) AtYear(year int) (Date, error) {
-	d := NewDate(year, md.t.Month(), md.t.Day())
-	if year != d.Year() || md.t.Month() != d.Month() || md.t.Day() != d.Day() {
-		return d, fmt.Errorf("date.MonthDay.AtYear: invalid year %d for month-day %s", year, md.String())
-	}
-	return d, nil
+func (md MonthDay) AtYear(year int) Date {
+	return NewDate(year, md.t.Month(), md.t.Day())
 }
 
 // String returns the month-day formatted in [MonthDayOnly].
