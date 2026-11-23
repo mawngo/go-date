@@ -20,10 +20,9 @@ v3 is a breaking release. Two themes dominate:
 Clamp ranges: month `[1,12]`, day `[1, days in month]`, hour `[0,23]`,
 minute/second `[0,59]`, nanosecond `[0,999999999]`. Year is passed through unchanged.
 
-**Arithmetic still wraps/carries** - `Add`, `AddDate`, `AddDays`, `AddMonths`, `AddYearMonth` keep their previous
-behavior.
+**Arithmetic still wraps/carries** - `Add`, `AddDate`, `AddDays`, `AddMonths`, `AddYearMonth` keep their previous behavior.
 
-## 2. Changes
+## 2. API Changes
 
 | v2                         | v3                                                                      |
 |----------------------------|-------------------------------------------------------------------------|
@@ -34,8 +33,8 @@ behavior.
 | `dt.AtTime(h, m, s, ns)`   | `dt.AtClockNano(h, m, s, ns)`                                           |
 | `DateNow()`                | `DateOf(time.Now())`                                                    |
 | `DateTimeNow()`            | `DateTimeOf(time.Now())`                                                |
-| `DateTimeFrom(date, time)` | `NewDateTime(...)` or `date.AtClockNano(time.ClockNano())`              |
-| `ClockOf(t)`               | `TimeOf(t)` (includes nanoseconds)                                      |
+| `DateTimeFrom(date, time)` | `date.AtClockNano(time.ClockNano())`              |
+| `ClockOf(t)`               | `TimeOf(t.Clock())`                                      |
 | `GormDataType()`           | GORM struct tag: `gorm:"type:date"` / `"type:time"` / `"type:datetime"` |
 
 ## 5. Migration checklist
