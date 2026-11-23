@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/mawngo/go-date/v2"
+	"github.com/mawngo/go-date/v3"
 	"time"
 )
 

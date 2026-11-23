@@ -1,13 +1,13 @@
 # Go Date
 
-Simple local `Date`, `Time` and `DateTime` type for Go.
+Simple `Date`, `Time` and `DateTime` type for Go.
 
 ## Installation
 
 Require go 1.27+
 
 ```shell
-go get -u github.com/mawngo/go-date/v2
+go get -u github.com/mawngo/go-date/v3
 ```
 
 Alternatively, you can just copy the `date.go`, `datetime.go`, `time.go`, and `partial.go` files into your project.
@@ -22,6 +22,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/mawngo/go-date/v3"
+	"time"
 )
 
 func main() {
@@ -33,6 +35,8 @@ func main() {
 	fmt.Println(d.UTC()) // 2026-11-14 00:00:00 +0000 UTC
 	// Convert to time.Time, at the start of the day in local time.
 	fmt.Println(d.Local()) // 2026-11-14 00:00:00 +0700 +07
+	// Now
+	fmt.Println(date.DateOf(time.Now())) // 2026-11-23
 
 	// Convert to date.DateTime
 	dt := d.AtClockNano(12, 0, 0, 0)
