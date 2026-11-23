@@ -114,6 +114,12 @@ func (ym YearMonth) AtDay(day int) Date {
 	return NewDate(ym.t.Year(), ym.t.Month(), day)
 }
 
+// IsValidDay returns true if the given day is valid for [YearMonth].
+func (ym YearMonth) IsValidDay(day int) bool {
+	y, m, d := ClampDate(ym.t.Year(), ym.t.Month(), day)
+	return y == ym.t.Year() && m == ym.t.Month() && d == day
+}
+
 // AtStartOfMonth returns a [Date] with the same year and month as [YearMonth] on the first day of the month.
 func (ym YearMonth) AtStartOfMonth() Date {
 	return NewDate(ym.t.Year(), ym.t.Month(), 1)
@@ -374,6 +380,12 @@ func (md MonthDay) MonthDay() (month time.Month, day int) {
 // the clamped date is returned along with an error.
 func (md MonthDay) AtYear(year int) Date {
 	return NewDate(year, md.t.Month(), md.t.Day())
+}
+
+// IsValidYear returns true if the given year is valid for [MonthDay].
+func (md MonthDay) IsValidYear(year int) bool {
+	y, m, d := ClampDate(year, md.t.Month(), md.t.Day())
+	return y == year && m == md.t.Month() && d == md.t.Day()
 }
 
 // String returns the month-day formatted in [MonthDayOnly].

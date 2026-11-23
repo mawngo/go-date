@@ -53,7 +53,6 @@ func main() {
 	// Only month and day
 	md := date.NewMonthDay(2, 29)
 	// To date
-	d2, err := md.AtYear(1998)
-	fmt.Println(err.Error()) // date.MonthDay.AtYear: invalid year 1998 for month-day 02-29
-	fmt.Println(d2.String()) // 1998-02-28 (clamped)
+	fmt.Println(md.IsValidYear(1998)) // false
+	fmt.Println(md.AtYear(1998))      // 1998-02-28
 }

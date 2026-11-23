@@ -68,6 +68,11 @@ func TestYearMonth(t *testing.T) {
 		if d := now.AtDay(10); !d.Equal(NewDate(now.Year(), now.Month(), 10)) {
 			t.Fatalf("AtDay produce wrong Date")
 		}
+
+		local := NewYearMonth(1998, 02)
+		if d := local.AtDay(29); !d.Equal(NewDate(local.Year(), local.Month(), 28)) || local.IsValidDay(29) {
+			t.Fatalf("AtDay produce wrong Date %v", d)
+		}
 	})
 
 	t.Run("Test Clamping", func(t *testing.T) {
@@ -129,10 +134,10 @@ func TestMonthDay(t *testing.T) {
 
 	t.Run("Test MonthDay Operations", func(t *testing.T) {
 		local := NewMonthDay(02, 29)
-		if v, err := local.AtYear(2000); err != nil || !v.Equal(NewDate(2000, 2, 29)) {
+		if v := local.AtYear(2000); !v.Equal(NewDate(2000, 2, 29)) || !local.IsValidYear(2000) {
 			t.Fatalf("AtYear failed %v", v)
 		}
-		if v, err := local.AtYear(1998); err == nil || !v.Equal(NewDate(1998, 2, 28)) {
+		if v := local.AtYear(1998); !v.Equal(NewDate(1998, 2, 28)) || local.IsValidYear(1998) {
 			t.Fatalf("AtYear failed %v", v)
 		}
 	})
